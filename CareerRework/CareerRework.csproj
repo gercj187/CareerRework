@@ -9,11 +9,19 @@
 
 	<!-- Derail Valley -->
 	<ItemGroup>
-		<Reference Include="Assembly-CSharp"/>
+		<Reference Include="Assembly-CSharp">
+			<HintPath>S:\SteamLibrary\steamapps\common\Derail Valley\DerailValley_Data\Managed\Assembly-CSharp.dll</HintPath>
+		</Reference>
 		<Reference Include="DV.ThingTypes"/>
-		<Reference Include="DV.Utils"/>
+		<Reference Include="DV.Utils">
+			<HintPath>S:\SteamLibrary\steamapps\common\Derail Valley\DerailValley_Data\Managed\DV.Utils.dll</HintPath>
+		</Reference>
+		<Reference Include="WorldStreamer"/>
 		<Reference Include="DV.Common"/>
 		<Reference Include="DV.WeatherSystem"/>
+		<Reference Include="DV.RailTrack">
+			<HintPath>S:\SteamLibrary\steamapps\common\Derail Valley\DerailValley_Data\Managed\DV.RailTrack.dll</HintPath>
+		</Reference>
 		<Reference Include="DV.UserManagement"/>
 		<Reference Include="Newtonsoft.Json"/>
 	</ItemGroup>
@@ -22,6 +30,7 @@
 	<ItemGroup>
 		<Reference Include="UnityEngine"/>
 		<Reference Include="UnityEngine.CoreModule"/>
+		<Reference Include="UnityEngine.PhysicsModule"/>
 	</ItemGroup>
 
 	<!-- Mod Loader -->

@@ -12,6 +12,7 @@ using DV.ThingTypes;
 using DV.ThingTypes.TransitionHelpers;
 using DV.UserManagement;
 using DV.Utils;
+using DV.Player;
 using HarmonyLib;
 using UnityModManagerNet;
 using UnityEngine;
@@ -24,7 +25,6 @@ namespace CareerRework
 	[HarmonyPatch(typeof(LicenseManager), "LoadData")]
 	public static class LicenseManager_LoadData_Patch
 	{
-		// Run patch after super method
 		static void Postfix(LicenseManager __instance)
 		{
 			// Job Licenses Prices									vanilla			modded
@@ -96,10 +96,7 @@ namespace CareerRework
 			GeneralLicenseType.SH282.ToV2().requiredGeneralLicense = GeneralLicenseType.NotSet.ToV2();
 			GeneralLicenseType.SH282.ToV2().requiredJobLicense = JobLicenses.TrainLength2.ToV2();
 		}
-
-		// Prefix: Wird vor der Originalfunktion aufgerufen
 		
-
 		static bool Prefix(SaveGameData data)
 		{
 			Debug.Log("[CareerRework] Loading GeneralLicenses, JobLicenses, and Garages...");
@@ -110,7 +107,6 @@ namespace CareerRework
 			return false;
 		}
 
-		// Hilfsmethode aus der Originalklasse extrahiert
 		private static List<T> ProcessListOfIDs<T>(IEnumerable<string> idList, IEnumerable<T> sourceList) where T : Thing_v2
 		{
 			if (idList == null) return new List<T>();
@@ -125,7 +121,6 @@ namespace CareerRework
 		}
 	}
 	
-	// PATCH: StartGameData_NewCareer.PrepareNewSaveData
 	[HarmonyPatch(typeof(StartGameData_NewCareer))]
 	public static class StartGameData_NewCareerPatch
 	{
@@ -189,18 +184,43 @@ namespace CareerRework
 			harmony.PatchAll();
 			Debug.Log("[CareerRework] Harmony patches applied.");
 
-			// entfernt – ersetzt durch Patch_WorldStreamingInit
-
 			var field = typeof(LicenseManager).GetField("TutorialGeneralLicenses", BindingFlags.Static | BindingFlags.Public);
 			if (field != null)
 			{
 				field.SetValue(null, new List<GeneralLicenseType_v2> { GeneralLicenseType.NotSet.ToV2() });
-				Debug.Log("[CareerRework] TutorialGeneralLicenses erfolgreich auf NotSet umgestellt.");
+				//Debug.Log("[CareerRework] TutorialGeneralLicenses erfolgreich auf NotSet umgestellt.");
 			}
 			else
 			{
-				Debug.LogError("[CareerRework] Fehler: Feld TutorialGeneralLicenses nicht gefunden.");
+				//Debug.LogError("[CareerRework] Fehler: Feld TutorialGeneralLicenses nicht gefunden.");
 			}
+		}
+
+        public static void CreateLocoZoneBlocker(TrainCar loco)
+		{
+			if (loco == null || loco.interior == null) return;
+
+			if (loco.interior.Find($"LocoZoneBlocker_{loco.ID}") != null) return;
+						
+			GameObject blockedDE2 = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			blockedDE2.name = $"LocoZoneBlocker_{loco.ID}";
+			blockedDE2.transform.SetParent(loco.interior);
+			blockedDE2.transform.localPosition = new Vector3(0f, 2.0f, 0f);
+			blockedDE2.transform.localRotation = Quaternion.identity;
+			blockedDE2.transform.localScale = new Vector3(3.5f, 3.9f, 7.8f);
+			blockedDE2.GetComponent<Renderer>().enabled = false;
+			
+			Collider col = blockedDE2.GetComponent<Collider>();
+			if (col != null)
+			{
+				col.isTrigger = true;
+			}
+
+			LocoZoneBlocker locoZoneBlocker = blockedDE2.AddComponent<LocoZoneBlocker>();
+			locoZoneBlocker.blockerObjectsParent = blockedDE2;
+			locoZoneBlocker.cab = loco.GetComponentInChildren<CabTeleportDestination>();
+			
+			//Debug.Log($"[CareerRework] LocoZoneBlocker auf DE2 '{loco.ID}' erstellt.");
 		}
 
 		public static IEnumerator BlockDE2Later()
@@ -214,66 +234,83 @@ namespace CareerRework
 					CreateLocoZoneBlocker(loco);
 				}
             }
-            Debug.Log("[CareerRework] Alle DE2-Loks mit ZoneBlocker versehen.");
-		}
-
-        public static void CreateLocoZoneBlocker(TrainCar loco)
-		{
-			GameObject blockerObject = new GameObject($"LocoZoneBlocker_{loco.ID}");
-			blockerObject.transform.SetParent(loco.interior);
-			blockerObject.transform.localPosition = Vector3.zero;
-			blockerObject.transform.localRotation = Quaternion.identity;
-						
-			GameObject blockedDE2 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			blockedDE2.transform.SetParent(blockerObject.transform);
-			//blockedDE2.transform.localPosition = new Vector3(0f, 2f, 0f);
-			blockedDE2.transform.localPosition = new Vector3(0f, 1.5f, 0f);
-			blockedDE2.transform.localRotation = Quaternion.identity;
-			//blockedDE2.transform.localScale = new Vector3(3.2f, 4f, 7.6f);
-			blockedDE2.transform.localScale = new Vector3(3.5f, 5f, 7.8f);
-			blockedDE2.GetComponent<Renderer>().enabled = false;
-			
-			Collider col = blockedDE2.GetComponent<Collider>();
-			if (col != null)
-			{
-				col.isTrigger = true;
-			}
-
-			LocoZoneBlocker locoZoneBlocker = blockerObject.AddComponent<LocoZoneBlocker>();
-			locoZoneBlocker.blockerObjectsParent = blockerObject;
-			locoZoneBlocker.cab = loco.GetComponentInChildren<CabTeleportDestination>();
-			
-			Debug.Log($"[CareerRework] LocoZoneBlocker auf DE2 '{loco.ID}' erstellt.");
-		}
-	
-		public static IEnumerator MonitorAndBlockDE2s()
-		{
-			while (true)
-			{
-				foreach (var loco in Object.FindObjectsOfType<TrainCar>())
-				{
-					if (loco.carType == TrainCarType.LocoShunter)
-					{
-						// Falls kein Blocker dran ist
-						if (loco.transform.Find($"LocoZoneBlocker_{loco.ID}") == null)
-						{
-							CreateLocoZoneBlocker(loco);
-						}
-					}
-				}
-				yield return new WaitForSeconds(10f); // alle 10 Sekunden neu scannen
-			}
 		}
     }
+	
+	public static class Dm3Spawner
+	{		
+		public static IEnumerator SpawnDm3AfterLoad()
+		{
+			while (CarSpawner.Instance == null || CarSpawner.Instance.PoolSetupInProgress)
+			{
+				yield return null;
+			}
+
+			var dm3Livery = Globals.G.Types.Liveries.Find(l => l.v1 == TrainCarType.LocoDM3);
+			if (dm3Livery == null)
+			{
+				//Debug.LogError("[CareerRework] DM3-Livery nicht gefunden!");
+				yield break;
+			}
+
+			var trackName = "[Y]_[SM]_[T1-02-P]";
+			var track = SingletonBehaviour<RailTrackRegistryBase>.Instance.AllTracks
+				.FirstOrDefault(t => t.name == trackName);
+
+			if (track == null)
+			{
+				Debug.LogError($"[CareerRework] ERROR! Track '{trackName}' not found!");
+				yield break;
+			}
+
+			var spawned = CarSpawner.Instance.SpawnCarTypesOnTrack(
+				new List<TrainCarLivery> { dm3Livery },
+				new List<bool> { false },
+				track,
+				preventAutoCoupleOnLastCars: true,
+				applyHandbrakeOnLastCars: true,
+				playerSpawnedCars: false
+			);
+
+			if (spawned != null && spawned.Count > 0)
+				Debug.Log("[CareerRework] Spawned starter DM3 at '{trackName}'.");
+			else
+				Debug.LogWarning("[CareerRework] ERROR! Starter DM3 spawn failed!.");
+		}
+
+	}
+	
+	[HarmonyPatch]
+	public static class Patch_CarSpawner_SpawnCar_Logger
+	{
+		static MethodBase TargetMethod()
+		{
+			var railTrackType = AccessTools.TypeByName("RailTrack");
+			return typeof(CarSpawner).GetMethod("SpawnCar", new[] {
+				typeof(GameObject), railTrackType, typeof(Vector3), typeof(Vector3),
+				typeof(bool), typeof(bool)
+			});
+		}
+
+		static void Postfix(TrainCar __result, bool playerSpawnedCar)
+		{
+			if (__result == null || playerSpawnedCar || !__result.IsLoco) return;
+
+			if (__result.carType == TrainCarType.LocoShunter && __result.transform.Find($"LocoZoneBlocker_{__result.ID}") == null)
+			{
+				LicenseManagerMod.CreateLocoZoneBlocker(__result);
+			}
+		}		
+	}
+
 
 	[HarmonyPatch(typeof(WorldStreamingInit), "Awake")]
 	public static class Patch_WorldStreamingInit
 	{
 		static void Postfix()
 		{
-			Debug.Log("[CareerRework] WorldStreamingInit gestartet – Starte BlockDE2Later()");
 			CoroutineManager.Instance.Run(LicenseManagerMod.BlockDE2Later());
-			CoroutineManager.Instance.Run(LicenseManagerMod.MonitorAndBlockDE2s());
+			CoroutineManager.Instance.Run(Dm3Spawner.SpawnDm3AfterLoad());
 		}
 	}
 }

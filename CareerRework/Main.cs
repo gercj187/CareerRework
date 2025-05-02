@@ -1,7 +1,10 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using UnityModManagerNet;
+using UnityEngine;
 
 namespace CareerRework;
 
@@ -11,7 +14,7 @@ public static class Main
 	{
 		var harmony = new Harmony(modEntry.Info.Id);
 		harmony.PatchAll();
-		modEntry.Logger.Log("[LicenseManagerMod] Harmony patches applied.");
+		modEntry.Logger.Log("[CareerRework] Harmony patches applied.");
 		return true;
 	}
 }

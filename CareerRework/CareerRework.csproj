@@ -19,6 +19,9 @@
 		<Reference Include="WorldStreamer"/>
 		<Reference Include="DV.Common"/>
 		<Reference Include="DV.WeatherSystem"/>
+		<Reference Include="DV.Inventory">
+			<HintPath>S:\SteamLibrary\steamapps\common\Derail Valley\DerailValley_Data\Managed\DV.Inventory.dll</HintPath>
+		</Reference>
 		<Reference Include="DV.RailTrack">
 			<HintPath>S:\SteamLibrary\steamapps\common\Derail Valley\DerailValley_Data\Managed\DV.RailTrack.dll</HintPath>
 		</Reference>
@@ -31,6 +34,7 @@
 		<Reference Include="UnityEngine"/>
 		<Reference Include="UnityEngine.CoreModule"/>
 		<Reference Include="UnityEngine.PhysicsModule"/>
+		<Reference Include="UnityEngine.IMGUIModule"/>
 	</ItemGroup>
 
 	<!-- Mod Loader -->

@@ -33,7 +33,7 @@ namespace CareerRework
 	{
 		static void Postfix(LicenseManager __instance)
 		{
-			// Job Licenses Prices									vanilla			modded
+			// Job Licenses Prices					vanilla			modded
 			JobLicenses.Shunting.ToV2().price = 25000f;         //	1000			25000
 			JobLicenses.LogisticalHaul.ToV2().price = 100000f;   //	20000			100000
 			JobLicenses.FreightHaul.ToV2().price = 200000f;     //	OWNED			200000
@@ -62,7 +62,7 @@ namespace CareerRework
 			JobLicenses.Military2.ToV2().requiredJobLicense = JobLicenses.Military1.ToV2();
 			JobLicenses.Military3.ToV2().requiredJobLicense = JobLicenses.Military2.ToV2();
 
-			// Career Licenses Prices										vanilla			modded
+			// Career Licenses Prices					vanilla			modded
 			GeneralLicenseType.TrainDriver.ToV2().price = 50000f;      //	OWNED			50000
 			GeneralLicenseType.ManualService.ToV2().price = 200000f;     //	20000			200000
 			GeneralLicenseType.ConcurrentJobs1.ToV2().price = 200000f;   //	10000			200000
@@ -81,7 +81,7 @@ namespace CareerRework
 			GeneralLicenseType.MultipleUnit.ToV2().requiredJobLicense = JobLicenses.TrainLength2.ToV2();
 			GeneralLicenseType.MuseumCitySouth.ToV2().requiredGeneralLicense = GeneralLicenseType.ManualService.ToV2();
 
-			// Loco Licenses Prices									vanilla			modded
+			// Loco Licenses Prices					vanilla			modded
 			GeneralLicenseType.DE2.ToV2().price = 75000f;      //	OWNED			75000
 			GeneralLicenseType.DM3.ToV2().price = 75000f;      //	30000			100000
 			GeneralLicenseType.S060.ToV2().price = 75000f;     //	20000			100000

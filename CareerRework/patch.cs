@@ -35,12 +35,12 @@ namespace CareerRework
 		{
 			// Job Licenses Prices									vanilla			modded
 			JobLicenses.Shunting.ToV2().price = 25000f;         //	1000			25000
-			JobLicenses.LogisticalHaul.ToV2().price = 50000f;   //	20000			50000
-			JobLicenses.FreightHaul.ToV2().price = 100000f;     //	OWNED			100000
-			JobLicenses.TrainLength1.ToV2().price = 50000f;     //	10000			50000
-			JobLicenses.TrainLength2.ToV2().price = 100000f;    //	20000			100000
-			JobLicenses.Fragile.ToV2().price = 125000f;         //	10000			125000
-			JobLicenses.Hazmat1.ToV2().price = 250000f;         //	40000			250000
+			JobLicenses.LogisticalHaul.ToV2().price = 100000f;   //	20000			100000
+			JobLicenses.FreightHaul.ToV2().price = 200000f;     //	OWNED			200000
+			JobLicenses.TrainLength1.ToV2().price = 200000f;     //	10000			200000
+			JobLicenses.TrainLength2.ToV2().price = 300000f;    //	20000			300000
+			JobLicenses.Fragile.ToV2().price = 300000f;         //	10000			300000
+			JobLicenses.Hazmat1.ToV2().price = 400000f;         //	40000			400000
 			JobLicenses.Hazmat2.ToV2().price = 500000f;         //	130000			500000
 			JobLicenses.Hazmat3.ToV2().price = 8000000f;         //	290000			8000000
 			JobLicenses.Military1.ToV2().price = 1000000f;       //	100000			1000000
@@ -63,13 +63,13 @@ namespace CareerRework
 			JobLicenses.Military3.ToV2().requiredJobLicense = JobLicenses.Military2.ToV2();
 
 			// Career Licenses Prices										vanilla			modded
-			GeneralLicenseType.TrainDriver.ToV2().price = 150000f;      //	OWNED			150000
-			GeneralLicenseType.ManualService.ToV2().price = 100000f;     //	20000			100000
-			GeneralLicenseType.ConcurrentJobs1.ToV2().price = 50000f;   //	10000			50000
-			GeneralLicenseType.ConcurrentJobs2.ToV2().price = 100000f;   //	20000			100000
-			GeneralLicenseType.MultipleUnit.ToV2().price = 200000f;      //	30000			200000
-			GeneralLicenseType.Dispatcher1.ToV2().price = 200000f;       //	10000			200000
-			GeneralLicenseType.MuseumCitySouth.ToV2().price = 200000f;  //	15000			200000
+			GeneralLicenseType.TrainDriver.ToV2().price = 50000f;      //	OWNED			50000
+			GeneralLicenseType.ManualService.ToV2().price = 200000f;     //	20000			200000
+			GeneralLicenseType.ConcurrentJobs1.ToV2().price = 200000f;   //	10000			200000
+			GeneralLicenseType.ConcurrentJobs2.ToV2().price = 300000f;   //	20000			300000
+			GeneralLicenseType.MultipleUnit.ToV2().price = 400000f;      //	30000			400000
+			GeneralLicenseType.Dispatcher1.ToV2().price = 400000f;       //	10000			400000
+			GeneralLicenseType.MuseumCitySouth.ToV2().price = 300000f;  //	15000			300000
 
 			// Career Licenses Conditions
 			GeneralLicenseType.ManualService.ToV2().requiredJobLicense = JobLicenses.Shunting.ToV2();
@@ -82,9 +82,9 @@ namespace CareerRework
 			GeneralLicenseType.MuseumCitySouth.ToV2().requiredGeneralLicense = GeneralLicenseType.ManualService.ToV2();
 
 			// Loco Licenses Prices									vanilla			modded
-			GeneralLicenseType.DE2.ToV2().price = 150000f;      //	OWNED			150000
-			GeneralLicenseType.DM3.ToV2().price = 150000f;      //	30000			150000
-			GeneralLicenseType.S060.ToV2().price = 150000f;     //	20000			150000
+			GeneralLicenseType.DE2.ToV2().price = 75000f;      //	OWNED			75000
+			GeneralLicenseType.DM3.ToV2().price = 75000f;      //	30000			100000
+			GeneralLicenseType.S060.ToV2().price = 75000f;     //	20000			100000
 			GeneralLicenseType.DH4.ToV2().price = 400000f;      //	50000			400000
 			GeneralLicenseType.SH282.ToV2().price = 750000f;    //	50000			750000
 			GeneralLicenseType.DE6.ToV2().price = 1000000f;     //	200000			1000000
@@ -161,7 +161,7 @@ namespace CareerRework
 
 			if (skipTutorial)
 			{
-				saveGameData.SetFloat("Player_money", 327500f);
+				saveGameData.SetFloat("Player_money", 155000f);
 				saveGameData.SetBool("Tutorial_01_completed", true);
 				saveGameData.SetBool("Tutorial_02_completed", true);
 				saveGameData.SetBool("Tutorial_03_completed", true);
@@ -191,7 +191,7 @@ namespace CareerRework
 				saveGameData.SetBool("Tutorial_02_completed", true);
 				saveGameData.SetBool("Tutorial_03_completed", true);
 				session.GameData.SetBool("Difficulty_picked", value: false);
-				saveGameData.SetFloat("Player_money", 327500f);
+				saveGameData.SetFloat("Player_money", 155000f);
 			}
 
 			return false;
@@ -329,56 +329,55 @@ namespace CareerRework
 		private static List<StartingItem> items = new List<StartingItem>();
 
 		[HarmonyPatch(typeof(StartingItemsController), nameof(StartingItemsController.AddStartingItems))]
-[HarmonyPrefix]
-public static void PatchGetStartingItems()
-{
-	Debug.Log("[CareerRework] Patch get starting items");
-	items.Clear();
-
-	if (Main.settings?.selectedStarterLoco != StarterLocoType.S060)
-	{
-		Debug.Log("[CareerRework] Keine S060 in den Settings – keine Items hinzugefügt.");
-		return;
-	}
-
-	var allDefs = AccessTools.Field(typeof(ItemsConfig), "startingItems")
-		.GetValue(Globals.G.Items) as List<StartingItems>;
-
-	if (allDefs == null)
-	{
-		Debug.LogError("[CareerRework] startingItems konnte nicht geladen werden!");
-		return;
-	}
-
-	var basic = allDefs.FirstOrDefault(i => i.startingItemsType == GameParams.StartingItemsType.Basic);
-	var expanded = allDefs.FirstOrDefault(i => i.startingItemsType == GameParams.StartingItemsType.Expanded);
-
-	if (basic == null || expanded == null)
-	{
-		Debug.LogError("[CareerRework] Basic oder Expanded StartingItems nicht gefunden!");
-		return;
-	}
-
-	var basicItems = basic.GetStartingItems();
-	var expandedItems = expanded.GetStartingItems();
-
-	Debug.Log($"{basicItems.Count} - {expandedItems.Count}");
-
-	foreach (var i in expandedItems)
-	{
-		if (includes.Contains(i.ItemPrefabName) && !basicItems.Contains(i))
+		[HarmonyPrefix]
+		public static void PatchGetStartingItems()
 		{
-			items.Add(i);
+			Debug.Log("[CareerRework] Patch get starting items");
+			items.Clear();
+
+			if (Main.settings?.selectedStarterLoco != StarterLocoType.S060)
+			{
+				Debug.Log("[CareerRework] Keine S060 in den Settings – keine Items hinzugefügt.");
+				return;
+			}
+
+			var allDefs = AccessTools.Field(typeof(ItemsConfig), "startingItems")
+				.GetValue(Globals.G.Items) as List<StartingItems>;
+
+			if (allDefs == null)
+			{
+				Debug.LogError("[CareerRework] startingItems konnte nicht geladen werden!");
+				return;
+			}
+
+			var basic = allDefs.FirstOrDefault(i => i.startingItemsType == GameParams.StartingItemsType.Basic);
+			var expanded = allDefs.FirstOrDefault(i => i.startingItemsType == GameParams.StartingItemsType.Expanded);
+
+			if (basic == null || expanded == null)
+			{
+				Debug.LogError("[CareerRework] Basic oder Expanded StartingItems nicht gefunden!");
+				return;
+			}
+
+			var basicItems = basic.GetStartingItems();
+			var expandedItems = expanded.GetStartingItems();
+
+			Debug.Log($"{basicItems.Count} - {expandedItems.Count}");
+
+			foreach (var i in expandedItems)
+			{
+				if (includes.Contains(i.ItemPrefabName) && !basicItems.Contains(i))
+				{
+					items.Add(i);
+				}
+			}
+
+			basicItems.AddRange(items);
+			expandedItems.RemoveAll(i => !items.Contains(i));
+
+			Debug.Log($"[CareerRework] {items.Count} zusätzliche Items für S060 hinzugefügt.");
 		}
 	}
-
-	basicItems.AddRange(items);
-	expandedItems.RemoveAll(i => !items.Contains(i));
-
-	Debug.Log($"[CareerRework] {items.Count} zusätzliche Items für S060 hinzugefügt.");
-}
-	}
-
 
 	[HarmonyPatch(typeof(WorldStreamingInit), "Awake")]
 	public static class Patch_WorldStreamingInit

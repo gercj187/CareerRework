@@ -9,12 +9,13 @@ namespace CareerRework
     }
 
     public class CareerReworkSettings : UnityModManager.ModSettings
-    {
-        public StarterLocoType selectedStarterLoco = StarterLocoType.DM3;
+	{
+		public StarterLocoType selectedStarterLoco = StarterLocoType.DM3;
+		public int startingMoney = 150000;
 
-        public override void Save(UnityModManager.ModEntry modEntry)
-        {
-            Save(this, modEntry);
-        }
-    }
+		public override void Save(UnityModManager.ModEntry modEntry)
+		{
+			Save(this, modEntry);
+		}
+	}
 }

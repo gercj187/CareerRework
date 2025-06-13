@@ -27,12 +27,24 @@
 		</Reference>
 		<Reference Include="DV.UserManagement"/>
 		<Reference Include="Newtonsoft.Json"/>
+		<Reference Include="DV.UIFramework">
+			<HintPath>S:\SteamLibrary\steamapps\common\Derail Valley_Data\Managed\DV.UIFramework.dll</HintPath>
+		</Reference>
+
 	</ItemGroup>
 
 	<!-- Unity -->
 	<ItemGroup>
+		<Reference Include="Unity.TextMeshPro">
+			<HintPath>S:\SteamLibrary\steamapps\common\Derail Valley_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.UI">
+			<HintPath>S:\SteamLibrary\steamapps\common\Derail Valley_Data\Managed\UnityEngine.UI.dll</HintPath>
+		</Reference>
 		<Reference Include="UnityEngine"/>
-		<Reference Include="UnityEngine.CoreModule"/>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>S:\SteamLibrary\steamapps\common\DerailValley_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+		</Reference>
 		<Reference Include="UnityEngine.PhysicsModule"/>
 		<Reference Include="UnityEngine.IMGUIModule"/>
 	</ItemGroup>

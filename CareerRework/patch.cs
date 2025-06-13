@@ -33,7 +33,7 @@ namespace CareerRework
 	{
 		static void Postfix(LicenseManager __instance)
 		{
-			// Job Licenses Prices					vanilla			modded
+			// Job Licenses Prices									vanilla			modded
 			JobLicenses.Shunting.ToV2().price = 25000f;         //	1000			25000
 			JobLicenses.LogisticalHaul.ToV2().price = 100000f;   //	20000			100000
 			JobLicenses.FreightHaul.ToV2().price = 200000f;     //	OWNED			200000
@@ -62,7 +62,7 @@ namespace CareerRework
 			JobLicenses.Military2.ToV2().requiredJobLicense = JobLicenses.Military1.ToV2();
 			JobLicenses.Military3.ToV2().requiredJobLicense = JobLicenses.Military2.ToV2();
 
-			// Career Licenses Prices					vanilla			modded
+			// Career Licenses Prices										vanilla			modded
 			GeneralLicenseType.TrainDriver.ToV2().price = 50000f;      //	OWNED			50000
 			GeneralLicenseType.ManualService.ToV2().price = 200000f;     //	20000			200000
 			GeneralLicenseType.ConcurrentJobs1.ToV2().price = 200000f;   //	10000			200000
@@ -81,7 +81,7 @@ namespace CareerRework
 			GeneralLicenseType.MultipleUnit.ToV2().requiredJobLicense = JobLicenses.TrainLength2.ToV2();
 			GeneralLicenseType.MuseumCitySouth.ToV2().requiredGeneralLicense = GeneralLicenseType.ManualService.ToV2();
 
-			// Loco Licenses Prices					vanilla			modded
+			// Loco Licenses Prices									vanilla			modded
 			GeneralLicenseType.DE2.ToV2().price = 75000f;      //	OWNED			75000
 			GeneralLicenseType.DM3.ToV2().price = 75000f;      //	30000			100000
 			GeneralLicenseType.S060.ToV2().price = 75000f;     //	20000			100000
@@ -161,7 +161,8 @@ namespace CareerRework
 
 			if (skipTutorial)
 			{
-				saveGameData.SetFloat("Player_money", 155000f);
+				//saveGameData.SetFloat("Player_money", 155000f);
+				saveGameData.SetFloat("Player_money", Main.settings?.startingMoney ?? 155000f);
 				saveGameData.SetBool("Tutorial_01_completed", true);
 				saveGameData.SetBool("Tutorial_02_completed", true);
 				saveGameData.SetBool("Tutorial_03_completed", true);
@@ -191,7 +192,8 @@ namespace CareerRework
 				saveGameData.SetBool("Tutorial_02_completed", true);
 				saveGameData.SetBool("Tutorial_03_completed", true);
 				session.GameData.SetBool("Difficulty_picked", value: false);
-				saveGameData.SetFloat("Player_money", 155000f);
+				//saveGameData.SetFloat("Player_money", 155000f);
+				saveGameData.SetFloat("Player_money", Main.settings?.startingMoney ?? 155000f);
 			}
 
 			return false;
@@ -268,7 +270,7 @@ namespace CareerRework
 
             if (track == null)
             {
-                Debug.LogError($"[CareerRework] Track '{trackName}' nicht gefunden!");
+                Debug.LogError($"[CareerRework] Track '{trackName}' not found!");
                 yield break;
             }
 
@@ -279,7 +281,7 @@ namespace CareerRework
             var livery = Globals.G.Types.Liveries.Find(l => l.v1 == selectedType);
             if (livery == null)
             {
-                Debug.LogError($"[CareerRework] Livery für {selectedType} nicht gefunden!");
+                Debug.LogError($"[CareerRework] Livery für {selectedType} not loaded!");
                 yield break;
             }
 
@@ -295,7 +297,7 @@ namespace CareerRework
             if (spawned != null && spawned.Count > 0)
                 Debug.Log($"[CareerRework] Spawned starter {selectedType} at SteelMill Yard Track 2.");
             else
-                Debug.LogWarning($"[CareerRework] Fehler beim Spawnen von {selectedType}.");
+                Debug.LogWarning($"[CareerRework] cant spawn {selectedType}.");
         }
     }
 	
@@ -337,7 +339,7 @@ namespace CareerRework
 
 			if (Main.settings?.selectedStarterLoco != StarterLocoType.S060)
 			{
-				Debug.Log("[CareerRework] Keine S060 in den Settings – keine Items hinzugefügt.");
+				//Debug.Log("[CareerRework] Keine S060 in den Settings – keine Items hinzugefügt.");
 				return;
 			}
 
@@ -346,7 +348,7 @@ namespace CareerRework
 
 			if (allDefs == null)
 			{
-				Debug.LogError("[CareerRework] startingItems konnte nicht geladen werden!");
+				//Debug.LogError("[CareerRework] startingItems konnte nicht geladen werden!");
 				return;
 			}
 
@@ -355,7 +357,7 @@ namespace CareerRework
 
 			if (basic == null || expanded == null)
 			{
-				Debug.LogError("[CareerRework] Basic oder Expanded StartingItems nicht gefunden!");
+				//Debug.LogError("[CareerRework] Basic oder Expanded StartingItems nicht gefunden!");
 				return;
 			}
 
@@ -375,7 +377,7 @@ namespace CareerRework
 			basicItems.AddRange(items);
 			expandedItems.RemoveAll(i => !items.Contains(i));
 
-			Debug.Log($"[CareerRework] {items.Count} zusätzliche Items für S060 hinzugefügt.");
+			Debug.Log($"[CareerRework] {items.Count} additional Items for S060 in your inventory.");
 		}
 	}
 

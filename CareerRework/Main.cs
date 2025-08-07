@@ -53,7 +53,7 @@ namespace CareerRework
             if (settings.startupMode == StartupMode.Custom)
             {			
                 Label($"Starting Money: {settings.startingMoney:N0} $");
-                settings.startingMoney = (int)HorizontalSlider(settings.startingMoney, 30000, 500000, GUILayout.Width(400));
+                settings.startingMoney = (int)HorizontalSlider(settings.startingMoney, 40000, 500000, GUILayout.Width(400));
 				
                 Space(10);
 				
@@ -135,9 +135,9 @@ namespace CareerRework
         public static float GetStartingMoney()
         {
             if (settings?.startupMode == StartupMode.Preset)
-                return 227500;
+                return 200000;
 
-            return settings?.startingMoney ?? 227500;
+            return settings?.startingMoney ?? 200000;
         }
 
         [HarmonyPatch(typeof(ScanItemCashRegisterModule), "InitializeData")]

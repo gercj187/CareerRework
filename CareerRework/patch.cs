@@ -45,13 +45,13 @@ namespace CareerRework
             if (s.startupMode == StartupMode.Preset)
             {
 				// Job License Prices
-                JobLicenses.Shunting.ToV2().price = 100000f;
-                JobLicenses.LogisticalHaul.ToV2().price = 200000f;
-                JobLicenses.FreightHaul.ToV2().price = 300000f;
-                JobLicenses.TrainLength1.ToV2().price = 200000f;
+                JobLicenses.Shunting.ToV2().price = 50000f;
+                JobLicenses.LogisticalHaul.ToV2().price = 100000f;
+                JobLicenses.FreightHaul.ToV2().price = 200000f;
+                JobLicenses.TrainLength1.ToV2().price = 100000f;
                 JobLicenses.TrainLength2.ToV2().price = 300000f;
-                JobLicenses.Fragile.ToV2().price = 200000f;
-                JobLicenses.Hazmat1.ToV2().price = 350000f;
+                JobLicenses.Fragile.ToV2().price = 100000f;
+                JobLicenses.Hazmat1.ToV2().price = 250000f;
                 JobLicenses.Hazmat2.ToV2().price = 500000f;
                 JobLicenses.Hazmat3.ToV2().price = 8000000f;
                 JobLicenses.Military1.ToV2().price = 1000000f;
@@ -59,12 +59,12 @@ namespace CareerRework
                 JobLicenses.Military3.ToV2().price = 4000000f;
 				// Career License Prices
                 GeneralLicenseType.TrainDriver.ToV2().price = 50000f;
-                GeneralLicenseType.ManualService.ToV2().price = 200000f;
-                GeneralLicenseType.ConcurrentJobs1.ToV2().price = 200000f;
+                GeneralLicenseType.ManualService.ToV2().price = 100000f;
+                GeneralLicenseType.ConcurrentJobs1.ToV2().price = 100000f;
                 GeneralLicenseType.ConcurrentJobs2.ToV2().price = 300000f;
                 GeneralLicenseType.MultipleUnit.ToV2().price = 400000f;
                 GeneralLicenseType.Dispatcher1.ToV2().price = 400000f;
-                GeneralLicenseType.MuseumCitySouth.ToV2().price = 300000f;
+                GeneralLicenseType.MuseumCitySouth.ToV2().price = 200000f;
 				// Loco License Prices
                 GeneralLicenseType.DE2.ToV2().price = 75000f;
                 GeneralLicenseType.DM3.ToV2().price = 75000f;
@@ -89,7 +89,7 @@ namespace CareerRework
 				if (s.priceMilitary2 > 0) JobLicenses.Military2.ToV2().price = s.priceMilitary2;
 				if (s.priceMilitary3 > 0) JobLicenses.Military3.ToV2().price = s.priceMilitary3;
 				// Career License Prices
-				if (s.priceTrainDriver == 0) GeneralLicenseType.TrainDriver.ToV2().price = 9000f;
+				if (s.priceTrainDriver == 0) GeneralLicenseType.TrainDriver.ToV2().price = 10000f;
 				if (s.priceManualService > 0) GeneralLicenseType.ManualService.ToV2().price = s.priceManualService;
 				if (s.priceConcurrentJobs1 > 0) GeneralLicenseType.ConcurrentJobs1.ToV2().price = s.priceConcurrentJobs1;
 				if (s.priceConcurrentJobs2 > 0) GeneralLicenseType.ConcurrentJobs2.ToV2().price = s.priceConcurrentJobs2;

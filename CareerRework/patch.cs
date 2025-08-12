@@ -78,7 +78,8 @@ namespace CareerRework
 				// Job License Prices
 				if (s.priceShunting > 0) JobLicenses.Shunting.ToV2().price = s.priceShunting;
 				if (s.priceLogisticalHaul > 0) JobLicenses.LogisticalHaul.ToV2().price = s.priceLogisticalHaul;
-				if (s.priceFreightHaul == 0) JobLicenses.FreightHaul.ToV2().price = 10000f;
+				if (s.priceFreightHaul > 0)	JobLicenses.FreightHaul.ToV2().price = s.priceFreightHaul;
+					else JobLicenses.FreightHaul.ToV2().price = 10000f;
 				if (s.priceTrainLength1 > 0) JobLicenses.TrainLength1.ToV2().price = s.priceTrainLength1;
 				if (s.priceTrainLength2 > 0) JobLicenses.TrainLength2.ToV2().price = s.priceTrainLength2;
 				if (s.priceFragile > 0) JobLicenses.Fragile.ToV2().price = s.priceFragile;
@@ -89,7 +90,8 @@ namespace CareerRework
 				if (s.priceMilitary2 > 0) JobLicenses.Military2.ToV2().price = s.priceMilitary2;
 				if (s.priceMilitary3 > 0) JobLicenses.Military3.ToV2().price = s.priceMilitary3;
 				// Career License Prices
-				if (s.priceTrainDriver == 0) GeneralLicenseType.TrainDriver.ToV2().price = 10000f;
+				if (s.priceTrainDriver > 0) GeneralLicenseType.TrainDriver.ToV2().price = s.priceTrainDriver;
+					else GeneralLicenseType.TrainDriver.ToV2().price = 10000f;
 				if (s.priceManualService > 0) GeneralLicenseType.ManualService.ToV2().price = s.priceManualService;
 				if (s.priceConcurrentJobs1 > 0) GeneralLicenseType.ConcurrentJobs1.ToV2().price = s.priceConcurrentJobs1;
 				if (s.priceConcurrentJobs2 > 0) GeneralLicenseType.ConcurrentJobs2.ToV2().price = s.priceConcurrentJobs2;
@@ -97,7 +99,8 @@ namespace CareerRework
 				if (s.priceDispatcher > 0) GeneralLicenseType.Dispatcher1.ToV2().price = s.priceDispatcher;
 				if (s.priceMuseum > 0) GeneralLicenseType.MuseumCitySouth.ToV2().price = s.priceMuseum;
 				// Loco License Prices
-				if (s.priceDE2 == 0) GeneralLicenseType.DE2.ToV2().price = 20000f;
+				if (s.priceDE2 > 0) GeneralLicenseType.DE2.ToV2().price = s.priceDE2;
+					else GeneralLicenseType.DE2.ToV2().price = 10000f;
 				if (s.priceDM3 > 0) GeneralLicenseType.DM3.ToV2().price = s.priceDM3;
 				if (s.priceS060 > 0) GeneralLicenseType.S060.ToV2().price = s.priceS060;
 				if (s.priceDH4 > 0) GeneralLicenseType.DH4.ToV2().price = s.priceDH4;

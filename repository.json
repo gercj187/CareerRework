@@ -2,7 +2,8 @@
 	"Releases": [
 		{
 			"Id": "CareerRework",
-			"Version": "0.99.2",
+			"Version": "1.05.4",
+			"DownloadUrl": "https://github.com/gercj187/CareerRework/releases/download/CareerRework/CareerRework_v1.05.4"
 		}
 	]
 }

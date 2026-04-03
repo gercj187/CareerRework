@@ -22,6 +22,8 @@ using DV.UserManagement;
 using DV.Utils;
 using DV.Player;
 using DV.Logic.Job;
+using DV.ServicePenalty;
+using DV.ServicePenalty.UI;
 using HarmonyLib;
 using UnityModManagerNet;
 using UnityEngine;
@@ -36,6 +38,32 @@ namespace CareerRework
     [HarmonyPatch(typeof(LicenseManager), "LoadData")]		
     public static class LicenseManager_LoadData_Patch
     {
+        public static bool IsRestoringSave = false;
+		
+        static bool Prefix(SaveGameData data)
+        {
+            IsRestoringSave = true;
+            Debug.Log("[CareerRework] Loading GeneralLicenses, JobLicenses, and Garages...");
+
+            try
+            {
+                ProcessListOfIDs(data.GetStringArray("Licenses_General"), Globals.G.Types.generalLicenses)
+                    .ForEach(l => SingletonBehaviour<LicenseManager>.Instance.AcquireGeneralLicense(l));
+                ProcessListOfIDs(data.GetStringArray("Licenses_Jobs"), Globals.G.Types.jobLicenses)
+                    .ForEach(l => SingletonBehaviour<LicenseManager>.Instance.AcquireJobLicense(l));
+                ProcessListOfIDs(data.GetStringArray("Garages"), Globals.G.Types.garages)
+                    .ForEach(g => SingletonBehaviour<LicenseManager>.Instance.UnlockGarage(g));
+
+                Debug.Log("[CareerRework] All data loaded successfully.");
+            }
+            finally
+            {
+                IsRestoringSave = false;
+            }
+
+            return false;
+        }
+		
         static void Postfix(LicenseManager __instance)
         {            
             if (Main.settings == null) return;
@@ -57,6 +85,7 @@ namespace CareerRework
                 JobLicenses.Military1.ToV2().price = 1000000f;
                 JobLicenses.Military2.ToV2().price = 2000000f;
                 JobLicenses.Military3.ToV2().price = 4000000f;
+                //JobLicenses.Passenger.ToV2().price = 500000f;
 				// Career License Prices
                 GeneralLicenseType.TrainDriver.ToV2().price = 50000f;
                 GeneralLicenseType.ManualService.ToV2().price = 100000f;
@@ -78,8 +107,7 @@ namespace CareerRework
 				// Job License Prices
 				if (s.priceShunting > 0) JobLicenses.Shunting.ToV2().price = s.priceShunting;
 				if (s.priceLogisticalHaul > 0) JobLicenses.LogisticalHaul.ToV2().price = s.priceLogisticalHaul;
-				if (s.priceFreightHaul > 0)	JobLicenses.FreightHaul.ToV2().price = s.priceFreightHaul;
-					else JobLicenses.FreightHaul.ToV2().price = 10000f;
+				if (s.priceFreightHaul > 0)	JobLicenses.FreightHaul.ToV2().price = s.priceFreightHaul; else JobLicenses.FreightHaul.ToV2().price = 10000f;
 				if (s.priceTrainLength1 > 0) JobLicenses.TrainLength1.ToV2().price = s.priceTrainLength1;
 				if (s.priceTrainLength2 > 0) JobLicenses.TrainLength2.ToV2().price = s.priceTrainLength2;
 				if (s.priceFragile > 0) JobLicenses.Fragile.ToV2().price = s.priceFragile;
@@ -89,9 +117,9 @@ namespace CareerRework
 				if (s.priceMilitary1 > 0) JobLicenses.Military1.ToV2().price = s.priceMilitary1;
 				if (s.priceMilitary2 > 0) JobLicenses.Military2.ToV2().price = s.priceMilitary2;
 				if (s.priceMilitary3 > 0) JobLicenses.Military3.ToV2().price = s.priceMilitary3;
+				//if (s.pricePassenger > 0) JobLicenses.Passenger.ToV2().price = s.pricePassenger;
 				// Career License Prices
-				if (s.priceTrainDriver > 0) GeneralLicenseType.TrainDriver.ToV2().price = s.priceTrainDriver;
-					else GeneralLicenseType.TrainDriver.ToV2().price = 10000f;
+				if (s.priceTrainDriver > 0) GeneralLicenseType.TrainDriver.ToV2().price = s.priceTrainDriver; else GeneralLicenseType.TrainDriver.ToV2().price = 10000f;
 				if (s.priceManualService > 0) GeneralLicenseType.ManualService.ToV2().price = s.priceManualService;
 				if (s.priceConcurrentJobs1 > 0) GeneralLicenseType.ConcurrentJobs1.ToV2().price = s.priceConcurrentJobs1;
 				if (s.priceConcurrentJobs2 > 0) GeneralLicenseType.ConcurrentJobs2.ToV2().price = s.priceConcurrentJobs2;
@@ -99,8 +127,7 @@ namespace CareerRework
 				if (s.priceDispatcher > 0) GeneralLicenseType.Dispatcher1.ToV2().price = s.priceDispatcher;
 				if (s.priceMuseum > 0) GeneralLicenseType.MuseumCitySouth.ToV2().price = s.priceMuseum;
 				// Loco License Prices
-				if (s.priceDE2 > 0) GeneralLicenseType.DE2.ToV2().price = s.priceDE2;
-					else GeneralLicenseType.DE2.ToV2().price = 10000f;
+				if (s.priceDE2 > 0) GeneralLicenseType.DE2.ToV2().price = s.priceDE2; else GeneralLicenseType.DE2.ToV2().price = 10000f;
 				if (s.priceDM3 > 0) GeneralLicenseType.DM3.ToV2().price = s.priceDM3;
 				if (s.priceS060 > 0) GeneralLicenseType.S060.ToV2().price = s.priceS060;
 				if (s.priceDH4 > 0) GeneralLicenseType.DH4.ToV2().price = s.priceDH4;
@@ -121,6 +148,7 @@ namespace CareerRework
             JobLicenses.Military1.ToV2().requiredJobLicense = JobLicenses.FreightHaul.ToV2();
             JobLicenses.Military2.ToV2().requiredJobLicense = JobLicenses.Military1.ToV2();
             JobLicenses.Military3.ToV2().requiredJobLicense = JobLicenses.Military2.ToV2();
+            //JobLicenses.Passenger.ToV2().requiredJobLicense = JobLicenses.FreightHaul.ToV2();
             // Career License Conditions
             GeneralLicenseType.ManualService.ToV2().requiredJobLicense = JobLicenses.Shunting.ToV2();
             GeneralLicenseType.ManualService.ToV2().requiredGeneralLicense = GeneralLicenseType.NotSet.ToV2();
@@ -139,22 +167,32 @@ namespace CareerRework
             GeneralLicenseType.DE6.ToV2().requiredJobLicense = JobLicenses.TrainLength2.ToV2();
             GeneralLicenseType.SH282.ToV2().requiredGeneralLicense = GeneralLicenseType.NotSet.ToV2();
             GeneralLicenseType.SH282.ToV2().requiredJobLicense = JobLicenses.TrainLength2.ToV2();
-        }
 
-        static bool Prefix(SaveGameData data)
-        {
-            Debug.Log("[CareerRework] Loading GeneralLicenses, JobLicenses, and Garages...");
-            ProcessListOfIDs(data.GetStringArray("Licenses_General"), Globals.G.Types.generalLicenses).ForEach(l => SingletonBehaviour<LicenseManager>.Instance.AcquireGeneralLicense(l));
-            ProcessListOfIDs(data.GetStringArray("Licenses_Jobs"), Globals.G.Types.jobLicenses).ForEach(l => SingletonBehaviour<LicenseManager>.Instance.AcquireJobLicense(l));
-            ProcessListOfIDs(data.GetStringArray("Garages"), Globals.G.Types.garages).ForEach(g => SingletonBehaviour<LicenseManager>.Instance.UnlockGarage(g));
-            Debug.Log("[CareerRework] All data loaded successfully.");
-            return false;
+            // ---------- Apply dynamic switches based on already-owned licenses ----------
+            var mgr = SingletonBehaviour<LicenseManager>.Instance;
+            var switcher = UnityEngine.Object.FindObjectOfType<LicenseConditionSwitcher>();
+
+            if (switcher != null && mgr != null)
+            {
+                if (mgr.IsJobLicenseAcquired(JobLicenses.TrainLength1.ToV2()))
+                    switcher.ForceSwitchTrainLength(); // TL2 requires FreightHaul
+
+                if (mgr.IsGeneralLicenseAcquired(GeneralLicenseType.ConcurrentJobs1.ToV2()))
+                    switcher.ForceSwitchConcurrent();   // CJ2 requires FreightHaul
+
+                if (mgr.IsJobLicenseAcquired(JobLicenses.FreightHaul.ToV2()))
+                    switcher.ForceSwitchMilitary();     // M1 requires Hazmat2
+            }
+            else
+            {
+                Debug.LogWarning("[CareerRework] LicenseConditionSwitcher not found during LoadData.Postfix.");
+            }
         }
 
         private static List<T> ProcessListOfIDs<T>(IEnumerable<string> idList, IEnumerable<T> sourceList) where T : Thing_v2
         {
             if (idList == null) return new List<T>();
-            List<T> list = new List<T>();
+            var list = new List<T>();
             foreach (string id in idList)
             {
                 T val = sourceList.FirstOrDefault(t => t.id == id);
@@ -162,6 +200,45 @@ namespace CareerRework
                 else Debug.LogError("Unknown thing (" + typeof(T).Name + ") ID in save file: " + id);
             }
             return list;
+        }
+    }
+	
+    [HarmonyPatch(typeof(LicenseManager), nameof(LicenseManager.IsJobLicenseObtainable))]
+    public static class Patch_IsJobLicenseObtainable_TL2
+    {
+        static void Postfix(JobLicenseType_v2 license, ref bool __result)
+        {
+            if (!__result) return; // already blocked by other logic
+            if (license != JobLicenses.TrainLength2.ToV2()) return;
+
+            var mgr = SingletonBehaviour<LicenseManager>.Instance;
+            if (!mgr.IsJobLicenseAcquired(JobLicenses.FreightHaul.ToV2()))
+            {
+                __result = false;
+            }
+        }
+    }
+	
+    [HarmonyPatch(typeof(LicenseManager), nameof(LicenseManager.AcquireJobLicense), new[] { typeof(JobLicenseType_v2) })]
+    public static class Patch_AcquireJobLicense_Guard
+    {
+        static bool Prefix(JobLicenseType_v2 newLicense)
+        {
+            // Allow during save restoration to not strip existing licenses from old saves.
+            if (LicenseManager_LoadData_Patch.IsRestoringSave)
+                return true;
+
+            if (newLicense == JobLicenses.TrainLength2.ToV2())
+            {
+                var mgr = SingletonBehaviour<LicenseManager>.Instance;
+                if (!mgr.IsJobLicenseAcquired(JobLicenses.FreightHaul.ToV2()))
+                {
+                    Debug.Log("[CareerRework] Prevented acquiring TrainLength2: FreightHaul missing.");
+                    return false; // block acquisition
+                }
+            }
+
+            return true; // proceed
         }
     }
 	
@@ -202,11 +279,18 @@ namespace CareerRework
 		private bool concurrentSwitched = false;
 		private bool trainLengthSwitched = false;
 		private bool militarySwitched = false;
+		//private bool passengerSwitched = false;
 
 		void Start()
 		{
 			Debug.Log("[CareerRework] LicenseConditionSwitcher started.");
 		}
+		
+		private static JobLicenseType_v2 JL(JobLicenses v1)
+			=> Globals.G.Types.jobLicenses.FirstOrDefault(j => j.v1 == v1);
+
+		private static GeneralLicenseType_v2 GL(GeneralLicenseType v1)
+			=> Globals.G.Types.generalLicenses.FirstOrDefault(g => g.v1 == v1);
 		
 		public void ForceSwitchConcurrent()
 		{
@@ -226,38 +310,91 @@ namespace CareerRework
 				SwitchMilitaryRequirement();
 		}
 
+		/*
+		public void ForceSwitchPassenger()
+		{
+			if (!passengerSwitched)
+				SwitchPassengerRequirement();
+		}*/		
+
 		private void SwitchConcurrentRequirement()
 		{
 			if (concurrentSwitched) return;
 
-			var concurrentjobs2 = GeneralLicenseType.ConcurrentJobs2.ToV2();
-			concurrentjobs2.requiredGeneralLicense = GeneralLicenseType.NotSet.ToV2();
-			concurrentjobs2.requiredJobLicense = JobLicenses.FreightHaul.ToV2();
-			concurrentSwitched = true;
-
-			Debug.Log("[CareerRework] ConcurrentJobs2 requirement changed: now requires FreightHaul");
+			var cj2 = GL(GeneralLicenseType.ConcurrentJobs2);
+			var fh  = JL(JobLicenses.FreightHaul);
+			if (cj2 != null && fh != null)
+			{
+				// UI & logic now see the DB-backed dependency
+				cj2.requiredGeneralLicense = GL(GeneralLicenseType.NotSet);
+				cj2.requiredJobLicense     = fh;
+				concurrentSwitched = true;
+				Debug.Log("[CareerRework] ConcurrentJobs2 requirement changed : now requires FreightHaul");
+			}
+			else
+			{
+				Debug.LogWarning("[CareerRework] Could not resolve ConcurrentJobs2/FreightHaul.");
+			}
 		}
 
 		private void SwitchTrainLengthRequirement()
 		{
 			if (trainLengthSwitched) return;
 
-			var trainlength2 = JobLicenses.TrainLength2.ToV2();
-			trainlength2.requiredJobLicense = JobLicenses.FreightHaul.ToV2();
-			trainLengthSwitched = true;
-
-			Debug.Log("[CareerRework] TrainLength2 requirement changed: now requires FreightHaul");
+			var tl2 = JL(JobLicenses.TrainLength2);
+			var fh  = JL(JobLicenses.FreightHaul);
+			if (tl2 != null && fh != null)
+			{
+				// Critical change: write to DB object, not .ToV2() temporary
+				tl2.requiredJobLicense = fh;
+				trainLengthSwitched = true;
+				Debug.Log("[CareerRework] TrainLength2 requirement changed : now requires FreightHaul");
+			}
+			else
+			{
+				Debug.LogWarning("[CareerRework] Could not resolve TrainLength2/FreightHaul.");
+			}
 		}
 
 		private void SwitchMilitaryRequirement()
 		{
 			if (militarySwitched) return;
 
-			var military1 = JobLicenses.Military1.ToV2();
-			military1.requiredJobLicense = JobLicenses.Hazmat2.ToV2();
-			militarySwitched = true;
-
-			Debug.Log("[CareerRework] Military1 requirement changed: now requires Hazmat2");
+			var m1  = JL(JobLicenses.Military1);
+			var hz2 = JL(JobLicenses.Hazmat2);
+			if (m1 != null && hz2 != null)
+			{
+				m1.requiredJobLicense = hz2;
+				militarySwitched = true;
+				Debug.Log("[CareerRework] Military1 requirement changed : now requires Hazmat2");
+			}
+			else
+			{
+				Debug.LogWarning("[CareerRework] Could not resolve Military1/Hazmat2.");
+			}
+		}
+	}
+	
+	[HarmonyPatch(typeof(LicenseManager), nameof(LicenseManager.IsJobLicenseObtainable))]
+	public static class Patch_IsJobLicenseObtainable_TL2_RefreshRequirement
+	{
+		static void Prefix(JobLicenseType_v2 license)
+		{
+			// If TL1 has been acquired earlier, ensure DB-backed TL2 requires FreightHaul.
+			if (license != null && license.v1 == JobLicenses.TrainLength2)
+			{
+				var mgr = SingletonBehaviour<LicenseManager>.Instance;
+				if (mgr != null && mgr.IsJobLicenseAcquired(JobLicenses.TrainLength1.ToV2()))
+				{
+					var tl2 = Globals.G.Types.jobLicenses.FirstOrDefault(j => j.v1 == JobLicenses.TrainLength2);
+					var fh  = Globals.G.Types.jobLicenses.FirstOrDefault(j => j.v1 == JobLicenses.FreightHaul);
+					if (tl2 != null && fh != null && tl2.requiredJobLicense != fh)
+					{
+						tl2.requiredJobLicense = fh;
+						Debug.Log("[CareerRework] (Refresh) Forced TL2 dependency to FreightHaul in DB before obtainability check.");
+					}
+				}
+			}
 		}
 	}
 	
@@ -283,7 +420,64 @@ namespace CareerRework
 			}
 		}
 	}
+	
+	// ---------- Show custom message BEFORE vanilla sets "TrainDriver" ----------
+	[HarmonyPatch(typeof(CareerManagerLicensesScreen), nameof(CareerManagerLicensesScreen.HandleInputAction))]
+	public static class Patch_CareerManagerLicensesScreen_CustomMissingText_Prefix
+	{
+		// Intercept before vanilla logic; if we handle it, skip original (return false)
+		static bool Prefix(CareerManagerLicensesScreen __instance, InputAction input)
+		{
+			if (input != InputAction.Confirm) return true; // let vanilla handle others
 
+			var mgr = SingletonBehaviour<LicenseManager>.Instance;
+			if (mgr == null || __instance == null) return true;
+
+			// Resolve private selector from base ScrollableDisplayScreen
+			var selectorField = AccessTools.Field(typeof(ScrollableDisplayScreen), "selector");
+			var selector = selectorField?.GetValue(__instance);
+			if (selector == null) return true;
+
+			var currentProp = selector.GetType().GetProperty("Current", BindingFlags.Instance | BindingFlags.Public);
+			if (currentProp == null) return true;
+			int currentIndex = (int)currentProp.GetValue(selector);
+
+			// Resolve private entries list
+			var entriesField = AccessTools.Field(typeof(CareerManagerLicensesScreen), "licenseEntries");
+			var entriesList = entriesField?.GetValue(__instance) as System.Collections.IList;
+			if (entriesList == null || currentIndex < 0 || currentIndex >= entriesList.Count) return true;
+
+			var entry = entriesList[currentIndex];
+			if (entry == null) return true;
+
+			// Check: selected item is a Job license AND it's Shunting
+			var isJobSetProp  = entry.GetType().GetProperty("IsJobLicenseSet", BindingFlags.Instance | BindingFlags.Public);
+			if (isJobSetProp == null || !(bool)isJobSetProp.GetValue(entry)) return true;
+
+			var jobLicenseProp = entry.GetType().GetProperty("JobLicense", BindingFlags.Instance | BindingFlags.Public);
+			var jobLicense = jobLicenseProp?.GetValue(entry) as JobLicenseType_v2;
+			if (jobLicense == null || jobLicense != JobLicenses.Shunting.ToV2()) return true;
+
+			// Our custom availability condition
+			bool hasTrainDriver = mgr.IsGeneralLicenseAcquired(GeneralLicenseType.TrainDriver.ToV2());
+			bool hasAnyLoco =
+				mgr.IsGeneralLicenseAcquired(GeneralLicenseType.DE2.ToV2()) ||
+				mgr.IsGeneralLicenseAcquired(GeneralLicenseType.S060.ToV2()) ||
+				mgr.IsGeneralLicenseAcquired(GeneralLicenseType.DM3.ToV2());
+
+			// If player owns TrainDriver but no loco license → show our message and STOP vanilla
+			if (hasTrainDriver && !hasAnyLoco)
+			{
+				string customMsg = "DE2, DM3, S060";
+				__instance.infoScreen.SetInfoData(__instance, CareerManagerInfoScreen.Preset.MissingLicense, customMsg);
+				__instance.screenSwitcher.SetActiveDisplay(__instance.infoScreen);
+				return false; // ← skip original HandleInputAction so "TrainDriver" doesn't overwrite us
+			}
+
+			return true; // run vanilla for all other cases
+		}
+	}
+	
     [HarmonyPatch(typeof(StartGameData_NewCareer))]
     public static class StartGameData_NewCareerPatch
     {
@@ -400,42 +594,55 @@ namespace CareerRework
     public static class LocoSpawner
     {
         public static IEnumerator SpawnStarterLocoAfterLoad()
-        {
-            while (CarSpawner.Instance == null || CarSpawner.Instance.PoolSetupInProgress)
-                yield return null;
+		{
+			while (CarSpawner.Instance == null || CarSpawner.Instance.PoolSetupInProgress)
+				yield return null;
 
-            var track = SingletonBehaviour<RailTrackRegistryBase>.Instance.AllTracks
-                .FirstOrDefault(t => t.name == "[Y]_[SM]_[T1-02-P]");
+			SpawnStarterOnTrack("[Y]_[SM]_[T1-01-P]", Main.settings?.starterLocoPrimary);
+			SpawnStarterOnTrack("[Y]_[SM]_[T1-02-P]", Main.settings?.starterLocoSecondary);
+		}	
 
-            if (track == null)
-            {
-                Debug.LogError("[CareerRework] Track not found!");
-                yield break;
-            }
+		private static void SpawnStarterOnTrack(string trackName, StarterLocoType? locoType)
+		{
+			if (locoType == null) return;
 
-            var selectedType = Main.GetSelectedStarterLoco();
-            var livery = Globals.G.Types.Liveries.Find(l => l.v1 == selectedType);
-            if (livery == null)
-            {
-                Debug.LogError($"[CareerRework] Livery for {selectedType} not loaded!");
-                yield break;
-            }
+			var track = SingletonBehaviour<RailTrackRegistryBase>.Instance.AllTracks
+				.FirstOrDefault(t => t.name == trackName);
 
-            var spawned = CarSpawner.Instance.SpawnCarTypesOnTrack(
-                new List<TrainCarLivery> { livery },
-                new List<bool> { false },
-                track,
-                preventAutoCoupleOnLastCars: true,
-                applyHandbrakeOnLastCars: true,
-                playerSpawnedCars: false
-            );
+			if (track == null)
+			{
+				Debug.LogError($"[CareerRework] Track not found: {trackName}");
+				return;
+			}
 
-            if (spawned != null && spawned.Count > 0)
-                Debug.Log($"[CareerRework] Spawned starter {selectedType} at SteelMill Yard Track 2.");
-            else
-                Debug.LogWarning($"[CareerRework] Can't spawn {selectedType}.");
-        }
-    }
+			TrainCarType carType = locoType switch
+			{
+				StarterLocoType.DE2  => TrainCarType.LocoShunter,
+				StarterLocoType.DM3  => TrainCarType.LocoDM3,
+				StarterLocoType.S060 => TrainCarType.LocoS060,
+				_ => TrainCarType.LocoDM3
+			};
+
+			var livery = Globals.G.Types.Liveries.FirstOrDefault(l => l.v1 == carType);
+			if (livery == null)
+			{
+				Debug.LogError($"[CareerRework] Livery not found for {carType}");
+				return;
+			}
+
+			var spawned = CarSpawner.Instance.SpawnCarTypesOnTrack(
+				new List<TrainCarLivery> { livery },
+				new List<bool> { false },
+				track,
+				preventAutoCoupleOnLastCars: true,
+				applyHandbrakeOnLastCars: true,
+				playerSpawnedCars: false
+			);
+
+			if (spawned != null && spawned.Count > 0)
+				Debug.Log($"[CareerRework] Spawned {carType} at {trackName}");
+		}
+	}
 
     [HarmonyPatch]
     public static class Patch_CarSpawner_SpawnCar_Logger
@@ -467,8 +674,15 @@ namespace CareerRework
 
         public static void Prefix()
         {
-            if (Main.settings?.startupMode != StartupMode.Custom || Main.settings?.selectedStarterLoco != StarterLocoType.S060)
-                return;
+            if (Main.settings == null || Main.settings.startupMode != StartupMode.Custom)
+				return;
+
+			bool hasS060 =
+				Main.settings.starterLocoPrimary == StarterLocoType.S060 ||
+				Main.settings.starterLocoSecondary == StarterLocoType.S060;
+
+			if (!hasS060)
+				return;
 
             Debug.Log("[CareerRework] Patch get starting items");
 

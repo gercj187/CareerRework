@@ -1,0 +1,12 @@
+{
+	"Id": "CareerRework",
+	"Version": "1.06.0",
+	"DisplayName": "Career Rework",
+	"Author": "CJ187",
+	"Credits": "Coookie, NotAnOption and ChatGPT",
+	"EntryMethod": "CareerRework.Main.Load",
+	"ManagerVersion": "0.27.2",
+	"HomePage": "https://www.nexusmods.com/derailvalley/mods/1153",
+	"Repository": "https://raw.githubusercontent.com/gercj187/CareerRework/refs/heads/main/Singleplayer/repository.json",
+	"MultiplayerCompatibility": "Incompatible"
+}

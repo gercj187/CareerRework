@@ -2,6 +2,9 @@
 // CareerRework multiplayer synchronization.
 
 using System;
+using DV;
+using DV.Common;
+using DV.Utils;
 using MPAPI;
 using MPAPI.Interfaces;
 using MPAPI.Interfaces.Packets;
@@ -20,6 +23,8 @@ namespace CareerRework
         public int StarterLocoPrimary { get; set; }
         public int StarterLocoSecondary { get; set; }
         public int StartingMoney { get; set; }
+        public bool StartWithConcurrentJobs1 { get; set; }
+        public bool StartWithConcurrentJobs2 { get; set; }
         public int PriceMultiplierKeysGadgets { get; set; }
 
         public int PriceTrainDriver { get; set; }
@@ -179,6 +184,8 @@ namespace CareerRework
             s.starterLocoPrimary = (StarterLocoType)Mathf.Clamp(p.StarterLocoPrimary, 0, 2);
             s.starterLocoSecondary = (StarterLocoType)Mathf.Clamp(p.StarterLocoSecondary, 0, 2);
             s.startingMoney = Math.Max(0, p.StartingMoney);
+            s.startWithConcurrentJobs1 = p.StartWithConcurrentJobs1;
+            s.startWithConcurrentJobs2 = p.StartWithConcurrentJobs1 && p.StartWithConcurrentJobs2;
             s.priceMultiplierKeysGadgets = Mathf.Clamp(p.PriceMultiplierKeysGadgets, 1, 10);
 
             s.priceTrainDriver = Math.Max(0, p.PriceTrainDriver);
@@ -211,6 +218,9 @@ namespace CareerRework
             PJcompatibility.SetConfiguredPassenger2Price(Math.Max(0, p.Passenger2Price));
 
             LicenseManager_LoadData_Patch.ReapplyHostConfiguration();
+            CareerReworkSaveState.ApplyConfiguredStartingConcurrentLicenses(
+                SingletonBehaviour<LicenseManager>.Instance,
+                "multiplayer snapshot");
             PJcompatibility.ApplyPassengerBaseTuning();
             PJcompatibility.ApplyPassenger2Pricing();
             PJcompatibility.ApplyPassengerSwitchedRequirementIfNeeded();
@@ -293,6 +303,8 @@ namespace CareerRework
                 StarterLocoPrimary = (int)s.starterLocoPrimary,
                 StarterLocoSecondary = (int)s.starterLocoSecondary,
                 StartingMoney = s.startingMoney,
+                StartWithConcurrentJobs1 = s.startWithConcurrentJobs1,
+                StartWithConcurrentJobs2 = s.startWithConcurrentJobs1 && s.startWithConcurrentJobs2,
                 PriceMultiplierKeysGadgets = s.priceMultiplierKeysGadgets,
 
                 PriceTrainDriver = s.priceTrainDriver,

@@ -19,6 +19,8 @@ namespace CareerRework
 		public StarterLocoType starterLocoSecondary  = StarterLocoType.DM3; // SteelMill Yard Track 1
 		public int startingMoney = 200000;
 		public StartupMode startupMode = StartupMode.Preset;
+		public bool startWithConcurrentJobs1 = false;
+		public bool startWithConcurrentJobs2 = false;
 		public int priceMultiplierKeysGadgets = 10;
 		//public int restorationPriceMultiplier = 10;
 		

@@ -55,7 +55,7 @@
 	<!-- MULTIPLAYER -->
 	<ItemGroup>
 		<Reference Include="MultiplayerAPI">
-			<HintPath>S:\SteamLibrary\steamapps\common\Derail Valley\Mods\Multiplayer\MultiplayerAPI.dll</HintPath>
+			<HintPath>E:\GDRIVE\DERAIL VALLEY\modding\Multiplayer\MultiplayerAPI.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
 	</ItemGroup>

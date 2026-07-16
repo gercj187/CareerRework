@@ -65,6 +65,9 @@ namespace CareerRework
             JObject settingsObject = new JObject();
 
             settingsObject["Gamemode"] = settings.startupMode.ToString();
+            settingsObject["startWithConcurrentJobs1"] = settings.startWithConcurrentJobs1;
+            settingsObject["startWithConcurrentJobs2"] =
+                settings.startWithConcurrentJobs1 && settings.startWithConcurrentJobs2;
 
             // Preset intentionally stores only the selected mode.
             if (settings.startupMode == StartupMode.Custom)
@@ -154,6 +157,15 @@ namespace CareerRework
             }
 
             Main.settings.startupMode = startupMode;
+            Main.settings.startWithConcurrentJobs1 = ReadBool(
+                settingsObject,
+                "startWithConcurrentJobs1",
+                Main.settings.startWithConcurrentJobs1);
+            Main.settings.startWithConcurrentJobs2 =
+                Main.settings.startWithConcurrentJobs1 && ReadBool(
+                    settingsObject,
+                    "startWithConcurrentJobs2",
+                    Main.settings.startWithConcurrentJobs2);
 
             if (startupMode == StartupMode.Custom)
             {
@@ -217,6 +229,95 @@ namespace CareerRework
 
 			return value;
 		}
+
+        private static bool ReadBool(JObject source, string key, bool fallback)
+        {
+            JToken? token = source[key];
+
+            if (token == null || token.Type == JTokenType.Null)
+                return fallback;
+
+            try
+            {
+                return token.Value<bool>();
+            }
+            catch
+            {
+                return fallback;
+            }
+        }
+
+        public static void AddConfiguredStartingConcurrentLicensesToSave(SaveGameData saveData)
+        {
+            if (saveData == null || Main.settings == null)
+                return;
+
+            bool grantConcurrentJobs1 = Main.settings.startWithConcurrentJobs1;
+            bool grantConcurrentJobs2 =
+                grantConcurrentJobs1 && Main.settings.startWithConcurrentJobs2;
+
+            if (grantConcurrentJobs1)
+            {
+                GeneralLicenseType_v2 license =
+                    GeneralLicenseType.ConcurrentJobs1.ToV2();
+
+                saveData.AddToStringArray(
+                    "Licenses_General",
+                    license.id,
+                    enforceUnique: true);
+
+                SingletonBehaviour<UnlockablesManager>.Instance?.UnlockThing(license);
+            }
+
+            if (grantConcurrentJobs2)
+            {
+                GeneralLicenseType_v2 license =
+                    GeneralLicenseType.ConcurrentJobs2.ToV2();
+
+                saveData.AddToStringArray(
+                    "Licenses_General",
+                    license.id,
+                    enforceUnique: true);
+
+                SingletonBehaviour<UnlockablesManager>.Instance?.UnlockThing(license);
+            }
+
+            Debug.Log(
+                $"[CareerRework] Starting concurrent licenses written: " +
+                $"CJ1={grantConcurrentJobs1}, CJ2={grantConcurrentJobs2}.");
+        }
+
+        public static void ApplyConfiguredStartingConcurrentLicenses(
+            LicenseManager manager,
+            string source)
+        {
+            if (manager == null || Main.settings == null)
+                return;
+
+            bool grantConcurrentJobs1 = Main.settings.startWithConcurrentJobs1;
+            bool grantConcurrentJobs2 =
+                grantConcurrentJobs1 && Main.settings.startWithConcurrentJobs2;
+
+            if (grantConcurrentJobs1 &&
+                !manager.IsGeneralLicenseAcquired(
+                    GeneralLicenseType.ConcurrentJobs1.ToV2()))
+            {
+                manager.AcquireGeneralLicense(
+                    GeneralLicenseType.ConcurrentJobs1.ToV2());
+            }
+
+            if (grantConcurrentJobs2 &&
+                !manager.IsGeneralLicenseAcquired(
+                    GeneralLicenseType.ConcurrentJobs2.ToV2()))
+            {
+                manager.AcquireGeneralLicense(
+                    GeneralLicenseType.ConcurrentJobs2.ToV2());
+            }
+
+            Debug.Log(
+                $"[CareerRework] Starting concurrent licenses applied from {source}: " +
+                $"CJ1={grantConcurrentJobs1}, CJ2={grantConcurrentJobs2}.");
+        }
 
         private static int ReadPrice(JObject source,string key,int fallback)
         {
@@ -302,6 +403,10 @@ namespace CareerRework
                     .ForEach(l => SingletonBehaviour<LicenseManager>.Instance.AcquireJobLicense(l));
                 ProcessListOfIDs(data.GetStringArray("Garages"), Globals.G.Types.garages)
                     .ForEach(g => SingletonBehaviour<LicenseManager>.Instance.UnlockGarage(g));
+
+                CareerReworkSaveState.ApplyConfiguredStartingConcurrentLicenses(
+                    SingletonBehaviour<LicenseManager>.Instance,
+                    "savegame settings");
 
                 Debug.Log("[CareerRework] All data loaded successfully.");
             }
@@ -815,6 +920,9 @@ namespace CareerRework
 
 					break;
 				}
+                CareerReworkSaveState.AddConfiguredStartingConcurrentLicensesToSave(
+                    saveGameData);
+					
 				CareerReworkSaveState.SaveTo(saveGameData);
 				Debug.Log(
 					"[CareerRework] Initial CareerRework settings written " +

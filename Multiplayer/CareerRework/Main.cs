@@ -99,6 +99,26 @@ namespace CareerRework
 
             Space(10);
 
+            Label("Starting concurrent-job licenses:");
+            settings.startWithConcurrentJobs1 = Toggle(
+                settings.startWithConcurrentJobs1,
+                "Start with ConcurrentJobs1",
+                ExpandWidth(false));
+
+            if (settings.startWithConcurrentJobs1)
+            {
+                settings.startWithConcurrentJobs2 = Toggle(
+                    settings.startWithConcurrentJobs2,
+                    "Start with ConcurrentJobs2",
+                    ExpandWidth(false));
+            }
+            else
+            {
+                settings.startWithConcurrentJobs2 = false;
+            }
+
+            Space(10);
+
             if (settings.startupMode == StartupMode.Custom)
             {			
                 Label($"Starting Money: {settings.startingMoney:N0} $");

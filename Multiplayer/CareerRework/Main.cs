@@ -17,6 +17,7 @@ namespace CareerRework
     public static class Main
     {
         public static UnityModManager.ModEntry? Mod;
+		public static CareerReworkSettings? localSettings;
         public static CareerReworkSettings? settings;
 		
 		public static bool IsCareerWorldActive
@@ -35,14 +36,56 @@ namespace CareerRework
 		{
 			get
 			{
-				return IsCareerWorldActive && CareerReworkSaveState.IsCareerConfigurationLoaded;
+				return IsCareerWorldActive &&
+					   CareerReworkSaveState.IsCareerConfigurationLoaded;
 			}
+		}
+
+		internal static void UseTemporaryHostSettings(CareerReworkSettings hostSettings)
+		{
+			if (hostSettings == null)
+				return;
+
+			settings = hostSettings;
+
+			Mod?.Logger.Log(
+				"[MP] Temporary host settings activated. " +
+				"Local settings remain unchanged.");
+		}
+		
+		internal static void RestoreLocalSettings()
+		{
+			if (localSettings == null)
+				return;
+
+			settings = localSettings.Clone();
+
+			Mod?.Logger.Log(
+				"[MP] Local CareerRework settings restored.");
+		}
+		
+		private static void SaveLocalSettings(UnityModManager.ModEntry modEntry)
+		{
+			if (localSettings == null || settings == null)
+				return;
+
+			localSettings.CopyFrom(settings);
+			localSettings.Save(modEntry);
 		}
 
         public static bool Load(UnityModManager.ModEntry modEntry)
         {
             Mod = modEntry;
-            settings = UnityModManager.ModSettings.Load<CareerReworkSettings>(modEntry);
+            
+            localSettings =	UnityModManager.ModSettings.Load<CareerReworkSettings>(modEntry);
+
+			if (localSettings == null)
+			{
+				localSettings =
+					new CareerReworkSettings();
+			}
+			
+			settings = localSettings.Clone();
 			
             CR_Multiplayer.Initialize();
 
@@ -218,9 +261,15 @@ namespace CareerRework
 		}
 
         static void OnSaveGUI(UnityModManager.ModEntry modEntry)
-        {
+        {            
             if (CR_Multiplayer.IsClient)
-                return;			
+            {
+				Mod?.Logger.Log(
+					"[MP] Settings save ignored on client. " +
+					"Temporary host values were not persisted.");
+
+                return;
+			}		
 			
 			if (AreCareerSettingsLocked)
 			{
@@ -229,7 +278,7 @@ namespace CareerRework
 				return;
 			}
 			
-            settings?.Save(modEntry);
+			SaveLocalSettings(modEntry);
 			
             CR_Multiplayer.NotifySettingsChanged();
         }

@@ -14,17 +14,16 @@ using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using HarmonyLib;
-using DV.ThingTypes;      // JobLicenses, JobLicenseType_v2
-using DV.Logic.Job;      // LicenseManager
+using DV.ThingTypes;
+using DV.Logic.Job; 
 using UnityEngine;
 using UnityModManagerNet;
 
 namespace CareerRework
 {
-    [HarmonyPatch] // Marker, damit PatchAll() diese Datei findet
+    [HarmonyPatch]
     internal static class PJcompatibility
     {
-        // --- Konfiguration / Caches ---
         private const string PASSENGER_PREFAB_NAME = "LicensePassengers1";
 		private const string PASSENGER2_PREFAB_NAME = "LicensePassengers2";
         private static bool? _active;
@@ -38,14 +37,15 @@ namespace CareerRework
         private const int DEFAULT_PRICE = 500000;
 		
 		private const string PLAYERPREFS_KEY_P2 = "CR_PJ_Passengers2Price";
-		private const int DEFAULT_PRICE_P2 = 1000000;
+		private const int DEFAULT_PRICE_P2 = 1000000;		
 		
-        // ---------------- Aktivierung erkennen ----------------
+		private static int? temporaryHostPassenger1Price;
+		private static int? temporaryHostPassenger2Price;
+		
         internal static bool IsPassengerJobsActive()
         {
             if (_active.HasValue) return _active.Value;
 
-            // 0) Schneller Pfad: Prefab bereits im Speicher?
             try
             {
                 var objs = Resources.FindObjectsOfTypeAll(typeof(JobLicenseType_v2));
@@ -64,11 +64,8 @@ namespace CareerRework
                 }
             }
             catch
-            {
-                // ignore – sehr früher Init-Zeitpunkt
-            }
+            { }
 
-            // 1) Namespace-Scan (exakt "PassengerJobs")
             try
             {
                 var asms = AppDomain.CurrentDomain.GetAssemblies();
@@ -112,7 +109,6 @@ namespace CareerRework
 		{
 		}
 
-        // ---------------- Helper: ToV2(JobLicenses)->JobLicenseType_v2 (Reflection) ----------------
         private static JobLicenseType_v2? GetV2(JobLicenses jl)
         {
             if (_toV2JobMethod == null)
@@ -197,7 +193,6 @@ namespace CareerRework
 					{
 						if (t.FullName != "PassengerJobs.Injectors.LicenseInjector") continue;
 
-						// 👉 PROPERTY statt FIELD
 						var prop = t.GetProperty("License2", BindingFlags.Public | BindingFlags.Static);
 						if (prop != null)
 						{
@@ -210,7 +205,6 @@ namespace CareerRework
 							}
 						}
 
-						// fallback: backing fields
 						var fields = t.GetFields(BindingFlags.NonPublic | BindingFlags.Static);
 						foreach (var f in fields)
 						{
@@ -238,7 +232,6 @@ namespace CareerRework
 			return null;
 		}
 
-        // ---------------- Passenger-Lizenz finden (mehrstufig, mit Prefab-Exact-Match) ----------------
         internal static JobLicenseType_v2? GetPassengerV2(bool forceRefresh = false)
         {
             if (!forceRefresh && _passengerV2 != null) return _passengerV2;
@@ -510,7 +503,6 @@ namespace CareerRework
             return false;
         }
 
-        // Kandidatentest: exakter Prefabname ODER Name enthält "Passenger"
         private static bool IsPassengerCandidate(JobLicenseType_v2 jl)
         {
             var uo = jl as UnityEngine.Object;
@@ -520,34 +512,131 @@ namespace CareerRework
             return false;
         }
 
-        // ---------------- Preis-Handling ----------------
-        internal static int GetConfiguredPassengerPrice()
+		internal static int GetConfiguredPassengerPrice()
         {
-            try { return PlayerPrefs.GetInt(PLAYERPREFS_KEY, DEFAULT_PRICE); }
-            catch { return DEFAULT_PRICE; }
+			if (CR_Multiplayer.IsClient &&
+				temporaryHostPassenger1Price.HasValue)
+			{
+				return temporaryHostPassenger1Price.Value;
+			}
+
+			try
+			{
+				return PlayerPrefs.GetInt(
+					PLAYERPREFS_KEY,
+					DEFAULT_PRICE);
+			}
+			catch
+			{
+				return DEFAULT_PRICE;
+			}
         }
 
         internal static void SetConfiguredPassengerPrice(int value)
         {
-            var v = Mathf.Max(0, value);
-            try { PlayerPrefs.SetInt(PLAYERPREFS_KEY, v); PlayerPrefs.Save(); }
-            catch { /* ignore */ }
+			if (CR_Multiplayer.IsClient)
+			{
+				Debug.LogWarning(
+					"[CareerRework][PassengerJobs][MP] " +
+					"Ignored persistent Passenger1 price write " +
+					"on multiplayer client.");
+
+				return;
+			}
+
+            int validatedValue =
+				Mathf.Max(
+					0,
+					value);
+
+			try
+			{
+				PlayerPrefs.SetInt(
+					PLAYERPREFS_KEY,
+					validatedValue);
+
+				PlayerPrefs.Save();
+			}
+			catch
+			{ }
         }
 		
 		internal static int GetConfiguredPassenger2Price()
 		{
-			try { return PlayerPrefs.GetInt(PLAYERPREFS_KEY_P2, DEFAULT_PRICE_P2); }
-			catch { return DEFAULT_PRICE_P2; }
+			if (CR_Multiplayer.IsClient &&
+				temporaryHostPassenger2Price.HasValue)
+			{
+				return temporaryHostPassenger2Price.Value;
+			}
+
+			try
+			{
+				return PlayerPrefs.GetInt(
+					PLAYERPREFS_KEY_P2,
+					DEFAULT_PRICE_P2);
+			}
+			catch
+			{
+				return DEFAULT_PRICE_P2;
+			}
 		}
 
 		internal static void SetConfiguredPassenger2Price(int value)
 		{
-			var v = Mathf.Max(0, value);
-			try { PlayerPrefs.SetInt(PLAYERPREFS_KEY_P2, v); PlayerPrefs.Save(); }
-			catch { }
+			if (CR_Multiplayer.IsClient)
+			{
+				Debug.LogWarning(
+					"[CareerRework][PassengerJobs][MP] " +
+					"Ignored persistent Passenger2 price write " +
+					"on multiplayer client.");
+
+				return;
+			}
+
+			int validatedValue =
+				Mathf.Max(
+					0,
+					value);
+
+			try
+			{
+				PlayerPrefs.SetInt(
+					PLAYERPREFS_KEY_P2,
+					validatedValue);
+
+				PlayerPrefs.Save();
+			}
+			catch
+			{ }
 		}
 
-        // ---------------- Basistuning ----------------
+		internal static void UseTemporaryHostPrices(int passenger1Price,int passenger2Price)
+		{
+			temporaryHostPassenger1Price =
+				Mathf.Max(
+					0,
+					passenger1Price);
+
+			temporaryHostPassenger2Price =
+				Mathf.Max(
+					0,
+					passenger2Price);
+
+			Debug.Log(
+				"[CareerRework][PassengerJobs][MP] " +
+				"Temporary host Passenger prices activated.");
+		}
+
+		internal static void ClearTemporaryHostPrices()
+		{
+			temporaryHostPassenger1Price = null;
+			temporaryHostPassenger2Price = null;
+
+			Debug.Log(
+				"[CareerRework][PassengerJobs][MP] " +
+				"Temporary host Passenger prices cleared.");
+		}
+
         internal static void ApplyPassengerBaseTuning()
         {
             if (!IsPassengerJobsActive()) return;
@@ -667,13 +756,11 @@ namespace CareerRework
 			Debug.Log("[CareerRework][PassengerJobs] ERROR: Passenger2 not found after timeout!");
 		}
 
-        // ---------------- Harmony Hooks ----------------
         [HarmonyPostfix, HarmonyPatch(typeof(LicenseManager), "LoadData")]
         private static void LM_LoadData_Postfix()
         {
             if (!IsPassengerJobsActive()) return;
 
-            // Prefab kann erst jetzt im Speicher sein – erneut suchen
             GetPassengerV2(forceRefresh: true);
 			GetPassenger2V2(forceRefresh: true);
 			
@@ -729,7 +816,6 @@ namespace CareerRework
             }
         }
 
-        // ---------------- Settings-GUI (nur Custom + Passenger aktiv) ----------------
         [HarmonyPostfix, HarmonyPatch(typeof(Main), "OnGUI")]
         private static void Main_OnGUI_Postfix(UnityModManager.ModEntry modEntry)
         {

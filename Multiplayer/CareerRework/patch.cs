@@ -1399,6 +1399,9 @@ namespace CareerRework
 		static void Postfix()
 		{
 			Main.SetCareerWorldActive(false);
+			
+			Main.RestoreLocalSettings();
+			PJcompatibility.ClearTemporaryHostPrices();
 
 			Debug.Log(
 				"[CareerRework] Main menu loaded. " +

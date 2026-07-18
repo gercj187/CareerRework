@@ -134,8 +134,15 @@ namespace CareerRework
         private void Update()
         {
             IClient? currentClient = MultiplayerAPI.Client;
+			
             if (!ReferenceEquals(client, currentClient))
             {
+				if (client != null)
+				{
+					RestoreLocalClientConfiguration(
+						"multiplayer client connection changed");
+				}
+
                 client = currentClient;
                 registered = false;
                 snapshotReceived = false;
@@ -176,51 +183,57 @@ namespace CareerRework
 
         private static void ApplyPacket(ClientBoundCareerReworkSettingsPacket p)
         {
-            CareerReworkSettings? s = Main.settings;
-            if (s == null)
-                return;
+			if (p == null)
+				return;
 
-            s.startupMode = (StartupMode)Mathf.Clamp(p.StartupMode, 0, 1);
-            s.starterLocoPrimary = (StarterLocoType)Mathf.Clamp(p.StarterLocoPrimary, 0, 2);
-            s.starterLocoSecondary = (StarterLocoType)Mathf.Clamp(p.StarterLocoSecondary, 0, 2);
-            s.startingMoney = Math.Max(0, p.StartingMoney);
-            s.startWithConcurrentJobs1 = p.StartWithConcurrentJobs1;
-            s.startWithConcurrentJobs2 = p.StartWithConcurrentJobs1 && p.StartWithConcurrentJobs2;
-            s.priceMultiplierKeysGadgets = Mathf.Clamp(p.PriceMultiplierKeysGadgets, 1, 10);
+			CareerReworkSettings hostSettings =	new CareerReworkSettings
+			{
+				startupMode = (StartupMode)Mathf.Clamp(p.StartupMode,0,1),
+				starterLocoPrimary = (StarterLocoType)Mathf.Clamp(p.StarterLocoPrimary,0,2),
+				starterLocoSecondary = (StarterLocoType)Mathf.Clamp(p.StarterLocoSecondary,0,2),
+				startingMoney = Math.Max(0, p.StartingMoney),
+				startWithConcurrentJobs1 = p.StartWithConcurrentJobs1,
+				startWithConcurrentJobs2 = p.StartWithConcurrentJobs1 && p.StartWithConcurrentJobs2,
+				priceMultiplierKeysGadgets = Mathf.Clamp(p.PriceMultiplierKeysGadgets,1,10),
+				priceTrainDriver = Math.Max(0, p.PriceTrainDriver),
+				priceShunting = Math.Max(0, p.PriceShunting),
+				priceLogisticalHaul = Math.Max(0, p.PriceLogisticalHaul),
+				priceFreightHaul = Math.Max(0, p.PriceFreightHaul),
+				priceFragile = Math.Max(0, p.PriceFragile),
+				priceHazmat1 = Math.Max(0, p.PriceHazmat1),
+				priceHazmat2 = Math.Max(0, p.PriceHazmat2),
+				priceHazmat3 = Math.Max(0, p.PriceHazmat3),
+				priceMilitary1 = Math.Max(0, p.PriceMilitary1),
+				priceMilitary2 = Math.Max(0, p.PriceMilitary2),
+				priceMilitary3 = Math.Max(0, p.PriceMilitary3),
+				priceConcurrentJobs1 = Math.Max(0, p.PriceConcurrentJobs1),
+				priceConcurrentJobs2 = Math.Max(0, p.PriceConcurrentJobs2),
+				priceTrainLength1 = Math.Max(0, p.PriceTrainLength1),
+				priceTrainLength2 = Math.Max(0, p.PriceTrainLength2),
+				priceMultipleUnit = Math.Max(0, p.PriceMultipleUnit),
+				priceManualService = Math.Max(0, p.PriceManualService),
+				priceMuseum = Math.Max(0, p.PriceMuseum),
+				priceDispatcher = Math.Max(0, p.PriceDispatcher),
+				priceDE2 = Math.Max(0, p.PriceDE2),
+				priceDM3 = Math.Max(0, p.PriceDM3),
+				priceS060 = Math.Max(0, p.PriceS060),
+				priceDH4 = Math.Max(0, p.PriceDH4),
+				priceS282 = Math.Max(0, p.PriceS282),
+				priceDE6 = Math.Max(0, p.PriceDE6)
+			};
 
-            s.priceTrainDriver = Math.Max(0, p.PriceTrainDriver);
-            s.priceShunting = Math.Max(0, p.PriceShunting);
-            s.priceLogisticalHaul = Math.Max(0, p.PriceLogisticalHaul);
-            s.priceFreightHaul = Math.Max(0, p.PriceFreightHaul);
-            s.priceFragile = Math.Max(0, p.PriceFragile);
-            s.priceHazmat1 = Math.Max(0, p.PriceHazmat1);
-            s.priceHazmat2 = Math.Max(0, p.PriceHazmat2);
-            s.priceHazmat3 = Math.Max(0, p.PriceHazmat3);
-            s.priceMilitary1 = Math.Max(0, p.PriceMilitary1);
-            s.priceMilitary2 = Math.Max(0, p.PriceMilitary2);
-            s.priceMilitary3 = Math.Max(0, p.PriceMilitary3);
-            s.priceConcurrentJobs1 = Math.Max(0, p.PriceConcurrentJobs1);
-            s.priceConcurrentJobs2 = Math.Max(0, p.PriceConcurrentJobs2);
-            s.priceTrainLength1 = Math.Max(0, p.PriceTrainLength1);
-            s.priceTrainLength2 = Math.Max(0, p.PriceTrainLength2);
-            s.priceMultipleUnit = Math.Max(0, p.PriceMultipleUnit);
-            s.priceManualService = Math.Max(0, p.PriceManualService);
-            s.priceMuseum = Math.Max(0, p.PriceMuseum);
-            s.priceDispatcher = Math.Max(0, p.PriceDispatcher);
-            s.priceDE2 = Math.Max(0, p.PriceDE2);
-            s.priceDM3 = Math.Max(0, p.PriceDM3);
-            s.priceS060 = Math.Max(0, p.PriceS060);
-            s.priceDH4 = Math.Max(0, p.PriceDH4);
-            s.priceS282 = Math.Max(0, p.PriceS282);
-            s.priceDE6 = Math.Max(0, p.PriceDE6);
+			Main.UseTemporaryHostSettings(hostSettings);
 
-            PJcompatibility.SetConfiguredPassengerPrice(Math.Max(0, p.Passenger1Price));
-            PJcompatibility.SetConfiguredPassenger2Price(Math.Max(0, p.Passenger2Price));
+			PJcompatibility.UseTemporaryHostPrices(
+				Math.Max(0, p.Passenger1Price),
+				Math.Max(0, p.Passenger2Price));
 
             LicenseManager_LoadData_Patch.ReapplyHostConfiguration();
+
             CareerReworkSaveState.ApplyConfiguredStartingConcurrentLicenses(
                 SingletonBehaviour<LicenseManager>.Instance,
                 "multiplayer snapshot");
+
             PJcompatibility.ApplyPassengerBaseTuning();
             PJcompatibility.ApplyPassenger2Pricing();
             PJcompatibility.ApplyPassengerSwitchedRequirementIfNeeded();
@@ -242,9 +255,27 @@ namespace CareerRework
 			Main.Mod?.Logger.Log(
 				"[MP] Local DE2 blocker refresh requested.");
 		}
+		
+		private static void RestoreLocalClientConfiguration(string reason)
+		{
+			Main.RestoreLocalSettings();
+
+			PJcompatibility.ClearTemporaryHostPrices();
+			LicenseManager_LoadData_Patch.ReapplyHostConfiguration();
+
+			PJcompatibility.ApplyPassengerBaseTuning();
+			PJcompatibility.ApplyPassenger2Pricing();
+			PJcompatibility.ApplyPassengerSwitchedRequirementIfNeeded();
+
+			Main.Mod?.Logger.Log(
+				$"[MP] Local client configuration restored: " +
+				$"{reason}.");
+		}
 
         private void OnDestroy()
         {
+			RestoreLocalClientConfiguration("multiplayer runtime destroyed");
+			
             if (Instance == this)
                 Instance = null;
         }

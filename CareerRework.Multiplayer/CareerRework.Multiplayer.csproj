@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<!--
+		Optionale Multiplayer-Anbindung ("Shim with Integration", wie LongerLoadingDelay).
+		Wird von CareerRework.dll nur geladen, wenn die Multiplayer-Mod aktiv ist.
+		Referenziert die Hauptmod NICHT (Kommunikation über Delegates) → keine Zirkelabhängigkeit.
+		MultiplayerAPI.dll wird NICHT mitgeliefert (bringt die Multiplayer-Mod selbst mit).
+	-->
+	<PropertyGroup>
+		<AssemblyName>CareerRework.Multiplayer</AssemblyName>
+		<RootNamespace>CareerRework.Multiplayer</RootNamespace>
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+
+		<DvManaged Condition="'$(DvManaged)' == ''">C:\GAMES\Steam\steamapps\common\Derail Valley\DerailValley_Data\Managed</DvManaged>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="Assembly-CSharp"><HintPath>$(DvManaged)\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+		<Reference Include="DV.ThingTypes"><HintPath>$(DvManaged)\DV.ThingTypes.dll</HintPath><Private>false</Private></Reference>
+		<Reference Include="UnityEngine"><HintPath>$(DvManaged)\UnityEngine.dll</HintPath><Private>false</Private></Reference>
+		<Reference Include="UnityEngine.CoreModule"><HintPath>$(DvManaged)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- mindestens die Version, die DVMultiplayerAPI verlangt (sonst NU1605) -->
+		<PackageReference Include="UnityModManager" Version="0.31.1" ExcludeAssets="runtime" />
+		<!-- nur zum Kompilieren; zur Laufzeit kommt die DLL von der Multiplayer-Mod -->
+		<PackageReference Include="DVMultiplayerAPI" Version="1.1.0" ExcludeAssets="runtime" PrivateAssets="all" />
+		<PackageReference Include="Nullable" Version="1.3.1" PrivateAssets="all" />
+	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="../build/" />
+	</Target>
+</Project>

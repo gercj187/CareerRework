@@ -82,19 +82,12 @@ namespace CareerRework
 
 		// ---------- Aufbau ----------
 		// Wie bei den anderen Loks: ein fester Block, den der Spieler nicht betreten kann, plus Hover-Hinweis
-		// "Lizenz fehlt". Form und Lage kommen vom Box-Collider des Lok-Grundmodells (größter fester Box-Collider
-		// der Lok), damit der Block exakt die Lok umschließt.
+		// "Lizenz fehlt" und gesperrter Einstieg ins Führerhaus.
 		//
-		// Früher ist die Lok explodiert: ein eigener fester Collider ohne Bezug zur Lok lag IN den Collidern der Lok,
-		// die Physik hat beide auseinandergedrückt. Jetzt:
-		//   • Der feste Block hängt unter dem Collider des Grundmodells und gehört damit zum Rigidbody der Lok.
-		//     Collider desselben Rigidbody stoßen sich nie ab → kein Kampf um die Position.
-		//   • Er liegt auf der Ebene Train_Walkable (wie die begehbaren Flächen): blockiert den Spieler,
-		//     berührt aber keine anderen Wagen – genau dieselbe Form wie das Grundmodell, also nicht größer.
-		//   • Schwerpunkt und Trägheit der Lok werden vorher gemerkt und danach wiederhergestellt,
-		//     damit sich das Fahrverhalten nicht ändert.
-		//   • Der Hover-Hinweis ist ein Trigger (keine Physik) minimal größer als der Block.
-		// Mit Lizenz (oder sobald sie gekauft wird) entfernt das Spiel beides selbst (LocoZoneBlocker.UnblockLoco).
+		// Physik – WICHTIG: Der Block darf nie zum Rigidbody der Lok gehören und nie auf einer Ebene liegen, die mit
+		// Gleis/Boden/Wagen kollidiert, sonst wird die Lok weggedrückt ("fliegt weg"). Deshalb exakt wie das Spiel:
+		// Block am Innenraum, Physik-Ebene von einem Original-Lok-Blocker übernommen, unten nie tiefer als das
+		// Grundmodell. Mit Lizenz (oder sobald sie gekauft wird) entfernt das Spiel alles selbst.
 		private static bool TryCreate(TrainCar car)
 		{
 			if (car.interior == null)
@@ -133,9 +126,13 @@ namespace CareerRework
 			{
 				const float margin = 0.1f;		// je Seite
 				center.x = outer.center.x;
-				center.y = outer.center.y;
 				size.x = Mathf.Max(size.x, outer.size.x) + 2f * margin;
-				size.y = Mathf.Max(size.y, outer.size.y) + margin;
+				// Höhe: unten NIE tiefer als das Grundmodell (sonst ragt der Block bis an Räder/Gleis),
+				// oben bis über das höchste Teil (Führerhaus/Einstiegszone)
+				float yMin = center.y - size.y / 2f;
+				float yMax = Mathf.Max(center.y + size.y / 2f, outer.max.y + margin);
+				center.y = (yMin + yMax) / 2f;
+				size.y = yMax - yMin;
 				// Länge nur erweitern, wenn eine Einstiegszone übers Grundmodell hinausragt
 				float zMin = Mathf.Min(center.z - size.z / 2f, outer.min.z - margin);
 				float zMax = Mathf.Max(center.z + size.z / 2f, outer.max.z + margin);
@@ -153,17 +150,43 @@ namespace CareerRework
 				size.z = zMax - zMin;
 			}
 
-			// 1) fester Block (Kind der Lok → gehört zu ihrem Rigidbody)
-			var solid = new GameObject("CareerRework_DE2Blocker");
-			solid.transform.SetParent(car.transform, false);
-			var box = solid.AddComponent<BoxCollider>();
-			box.center = center;
-			box.size = size;
-			AddSolid(car, solid, box);
+			// Harte Grenze: nie mehr als 1,5 m breiter/höher/länger als das Grundmodell
+			if (source != null)
+			{
+				var t = source.transform;
+				Vector3 bc = car.transform.InverseTransformPoint(t.TransformPoint(source.center));
+				Vector3 ls = t.lossyScale, cs = car.transform.lossyScale;
+				Vector3 bs = new Vector3(Mathf.Abs(source.size.x * ls.x / cs.x), Mathf.Abs(source.size.y * ls.y / cs.y), Mathf.Abs(source.size.z * ls.z / cs.z));
+				size = new Vector3(Mathf.Min(size.x, bs.x + 1.5f), Mathf.Min(size.y, bs.y + 1.5f), Mathf.Min(size.z, bs.z + 1.5f));
+				center = new Vector3(
+					Mathf.Clamp(center.x, bc.x - 0.75f, bc.x + 0.75f),
+					Mathf.Clamp(center.y, bc.y - 0.75f, bc.y + 0.75f),
+					Mathf.Clamp(center.z, bc.z - 0.75f, bc.z + 0.75f));
+			}
+			Main.Log($"DE2 blocker {car.ID}: center {center}, size {size}.");
 
-			// 2) Hover-Hinweis "Lizenz fehlt" (Trigger, das Spiel hängt ihn an den Innenraum und hält ihn an der Lok)
+			// 1) Hover-Hinweis "Lizenz fehlt" (Trigger, das Spiel hängt ihn an den Innenraum und hält ihn an der Lok)
 			var hover = new GameObject(name);
 			hover.transform.SetParent(car.interior, false);
+
+			// 2) fester Block – GENAU wie die Blocker des Spiels bei den anderen Loks: am Innenraum (NICHT am
+			//    Rigidbody der Lok) und auf derselben Physik-Ebene wie die Original-Blocker. Diese Ebene stößt nur
+			//    den Spieler ab, nicht Lok, Gleis oder Boden. Ohne gefundene Original-Ebene gibt es keinen festen
+			//    Block (nur Hinweis + gesperrter Einstieg) – lieber durchlässig als eine wegfliegende Lok.
+			var solid = new GameObject("CareerRework_DE2Blocker");
+			solid.transform.SetParent(hover.transform, false);
+			int layer = VanillaBlockerLayer();
+			if (layer >= 0)
+			{
+				solid.layer = layer;
+				var box = solid.AddComponent<BoxCollider>();
+				box.center = center;
+				box.size = size;
+				foreach (var c in car.GetComponentsInChildren<Collider>(true))		// zusätzliche Sicherheit
+					if (c != null && c != box && c.enabled && c.gameObject.activeInHierarchy)
+						Physics.IgnoreCollision(box, c, true);
+			}
+
 			var trigger = hover.AddComponent<BoxCollider>();
 			trigger.isTrigger = true;
 			trigger.center = center;
@@ -221,7 +244,7 @@ namespace CareerRework
 				if (car.interior != null && c.transform.IsChildOf(car.interior))
 					continue;
 
-				if (!AddCorners(root, c, corners))
+				if (!c.gameObject.activeInHierarchy || !AddCorners(root, c, corners) || !Plausible(corners))
 					continue;
 				for (int i = 0; i < 8; i++)
 				{
@@ -256,9 +279,9 @@ namespace CareerRework
 					continue;
 				foreach (var c in dest.GetComponentsInChildren<Collider>(true))
 				{
-					if (c == null)
+					if (c == null || !c.enabled || !c.gameObject.activeInHierarchy)
 						continue;
-					if (!AddCorners(root, c, corners))
+					if (!AddCorners(root, c, corners) || !Plausible(corners))
 						continue;
 					for (int i = 0; i < 8; i++)
 					{
@@ -278,6 +301,20 @@ namespace CareerRework
 				if (t.GetComponent<CabTeleportDestination>() != null)
 					return true;
 			return false;
+		}
+
+		// Nur Collider, die wirklich an der Lok sitzen (Lok-Koordinaten: Breite ±3 m, Höhe -1…6 m, Länge ±8 m).
+		// Inaktive bzw. noch nicht platzierte Collider melden teils Positionen am Weltursprung – ohne diese Prüfung
+		// wurde der Block kilometergroß und schief.
+		private static bool Plausible(Vector3[] corners)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				var p = corners[i];
+				if (Mathf.Abs(p.x) > 3f || p.y < -1f || p.y > 6f || Mathf.Abs(p.z) > 8f)
+					return false;
+			}
+			return true;
 		}
 
 		/// <summary>8 Eckpunkte eines Colliders in Lok-Koordinaten (false = unbrauchbar, z. B. inaktiv).</summary>
@@ -305,32 +342,87 @@ namespace CareerRework
 			return true;
 		}
 
-		private static int walkableLayer = -2;
+		// Physik-Ebene für den festen Block – anhand der Kollisionsmatrix des Spiels geprüft:
+		//   MUSS mit dem Spieler kollidieren (sonst läuft man durch),
+		//   darf NICHT mit Default / Train_Big_Collider / Terrain kollidieren (sonst wird die Lok weggedrückt),
+		//   möglichst auch nicht mit Train_Walkable.
+		// Reihenfolge der Kandidaten: Ebene der Original-Lok-Blocker, Train_Walkable, alle übrigen benannten Ebenen.
+		// Das Ergebnis steht immer im Log.
+		private static int blockerLayer = -2;
 
-		private static void AddSolid(TrainCar car, GameObject solid, BoxCollider box)
+		private static int VanillaBlockerLayer()
 		{
-			if (walkableLayer == -2)
-				walkableLayer = LayerMask.NameToLayer("Train_Walkable");
-			if (walkableLayer >= 0)
-				solid.layer = walkableLayer;
+			if (blockerLayer != -2)
+				return blockerLayer;
+			blockerLayer = -1;
 
-			// Schwerpunkt/Trägheit nicht durch den zusätzlichen Collider verändern
-			var rb = car.rb;
-			if (rb != null)
+			int player = LayerMask.NameToLayer("Player");
+			if (player < 0)
 			{
-				Vector3 com = rb.centerOfMass;
-				Vector3 inertia = rb.inertiaTensor;
-				Quaternion inertiaRot = rb.inertiaTensorRotation;
-				box.enabled = true;
-				rb.centerOfMass = com;
-				rb.inertiaTensor = inertia;
-				rb.inertiaTensorRotation = inertiaRot;
+				Main.Warn("DE2 blocker: layer 'Player' not found – no solid blocker (hint and locked cab entry only).");
+				return blockerLayer;
 			}
 
-			// zur Sicherheit: nie mit den eigenen Collidern der Lok kollidieren
-			foreach (var c in car.GetComponentsInChildren<Collider>(true))
-				if (c != null && c != box && c.enabled && c.gameObject.activeInHierarchy)
-					Physics.IgnoreCollision(box, c, true);
+			var hard = new List<int>();
+			foreach (var n in new[] { "Default", "Train_Big_Collider", "Terrain" })
+			{
+				int l = LayerMask.NameToLayer(n);
+				if (l >= 0) hard.Add(l);
+			}
+			int walkable = LayerMask.NameToLayer("Train_Walkable");
+
+			var candidates = new List<int>();
+			int vanilla = FindVanillaLayer();
+			if (vanilla >= 0) candidates.Add(vanilla);
+			if (walkable >= 0 && !candidates.Contains(walkable)) candidates.Add(walkable);
+			for (int l = 0; l < 32; l++)
+				if (!candidates.Contains(l) && !string.IsNullOrEmpty(LayerMask.LayerToName(l)))
+					candidates.Add(l);
+
+			bool Fits(int l, bool avoidWalkable)
+			{
+				if (Physics.GetIgnoreLayerCollision(l, player))
+					return false;									// Spieler muss abprallen
+				foreach (var h in hard)
+					if (!Physics.GetIgnoreLayerCollision(l, h))
+						return false;								// darf Lok/Gleis/Boden nicht berühren
+				if (avoidWalkable && walkable >= 0 && l != walkable && !Physics.GetIgnoreLayerCollision(l, walkable))
+					return false;
+				return true;
+			}
+
+			foreach (bool strict in new[] { true, false })
+				foreach (var l in candidates)
+					if (Fits(l, strict))
+					{
+						blockerLayer = l;
+						Main.Info($"DE2 blocker layer: {l} ({LayerMask.LayerToName(l)}){(l == vanilla ? " – same as vanilla loco blockers" : "")}.");
+						return blockerLayer;
+					}
+
+			Main.Warn($"DE2 blocker: no safe physics layer found (vanilla layer {vanilla}) – no solid blocker (hint and locked cab entry only).");
+			return blockerLayer;
+		}
+
+		// Ebene der Original-Lok-Blocker (z. B. am DM3-Prefab)
+		private static int FindVanillaLayer()
+		{
+			try
+			{
+				foreach (var z in Resources.FindObjectsOfTypeAll<LocoZoneBlocker>())
+				{
+					if (z == null || z.blockerObjectsParent == null || z.gameObject.name.StartsWith("LocoZoneBlocker_"))
+						continue;		// eigene überspringen
+					foreach (var c in z.blockerObjectsParent.GetComponentsInChildren<Collider>(true))
+						if (c != null && !c.isTrigger)
+							return c.gameObject.layer;
+				}
+			}
+			catch (System.Exception e)
+			{
+				Main.Log("Vanilla loco blocker layer: " + e.Message);
+			}
+			return -1;
 		}
 
 		// Einstieg ins Führerhaus: so wie das Spiel ihn selbst verwaltet (TrainCar.cabTeleportDestination)

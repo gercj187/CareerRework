@@ -1,0 +1,13 @@
+{
+	"Id": "CareerRework",
+	"Version": "1.07.00",
+	"DisplayName": "Career Rework",
+	"Author": "CJ187",
+	"Credits": "Coookie, NotAnOption and ChatGPT",
+	"AssemblyName": "CareerRework.dll",
+	"EntryMethod": "CareerRework.Main.Load",
+	"ManagerVersion": "0.27.2",
+	"LoadAfter": [ "Multiplayer", "PassengerJobs" ],
+	"HomePage": "https://www.nexusmods.com/derailvalley/mods/1153",
+	"Repository": "https://raw.githubusercontent.com/gercj187/CareerRework/refs/heads/main/repository.json"
+}
